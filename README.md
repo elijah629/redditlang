@@ -15,6 +15,7 @@ Redditlang is
 **roughly equivalent to 512 Megabytes*
 
 
-So what are you waiting for? Please invest your life savings in this!*
+So what are you waiting for? Please invest your life savings in this!*  
+*[Check out the VS Code support development here](https://github.com/Roizor/redditlang-vscode)*
 
 **Compiler coming soon*
