@@ -1,0 +1,47 @@
+# Module import
+#bringme module
+# or
+#weneed module
+
+# Variables
+myguy apple Σ 42069 # Declare apple with value of 42069
+
+# Input
+pulloutn't orange # Read input
+
+call cook("hi")
+
+coitusinterruptus $orange
+
+# Loops
+repeatdatshid
+
+is apple wut # Null check
+coitusinterruptus 'Apple is null :('
+si
+
+is apple okn'tbud
+coitusinterruptus 'Apple is false :('
+si
+
+is apple okbud # Conditional check for true
+coitusinterruptus 'Hello world!'
+si
+zzz 2
+
+sthu
+
+# Functions
+callmeonmycellphone cook(arg1) {
+coitusinterruptus 'We need $arg1'
+}
+
+# Classes
+school Lab {
+~snoRt() {
+# Default constructor
+}
+cooK() {
+# Default destructor
+}
+}
