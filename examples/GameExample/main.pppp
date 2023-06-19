@@ -1,0 +1,7 @@
+# Before you ask, yes .pppp is also an extension compatible.
+bringme mod.pppp
+
+coitusinterruptus "Welcome to the Redditlang Computer-Aided Demo".
+coitusinterruptus "Your job is to guess the number, 1-10."
+
+GameExample->start()
