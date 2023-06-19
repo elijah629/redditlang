@@ -11,11 +11,11 @@ nm4u banana damn fruit # Local variable
 repeat dat shid
 
 is apple wut # Null check
-Print("Null")
+pullout "Apple is null :("
 si
 
 is apple okbud # Conditional check for true
-Print("Hello world")
+pullout "Hello world"
 si
 
 sthu
