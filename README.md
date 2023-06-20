@@ -1,5 +1,8 @@
+<img src="temporary RL logo.png" width="100" height="100"/>
+
 # redditlang
-PHP++ short for redditlang is a language created by the r/ProgrammerHumor subreddit discord members 
+PHP++ short for redditlang is a language created by the r/ProgrammerHumor subreddit discord members!  
+Check out our syntax in [example.redditlang](example.redditlang)
 
 ## Why use Redditlang?
 Redditlang is
