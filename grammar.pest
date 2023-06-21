@@ -1,0 +1,153 @@
+// Main rule
+Program = _{ SOI ~ Statements? ~ EOI }
+
+// Comment and whitespace
+COMMENT    = _{ ("#*" ~ (!"*#" ~ ANY)* ~ "*#") | ("#" ~ (!NEWLINE ~ ANY)*) }
+WHITESPACE = _{ " " | "\t" }
+
+// Fundimental Language Components
+/// Represents any amount of statements seperated by a NEWLINE
+Statements = _{ NEWLINE* ~ (Statement ~ NEWLINE+)* ~ Statement? }
+Statement  =  {
+    Loop
+  | Break
+  | Function
+  | TryCatch
+  | Throw
+  | Import
+  | Module
+  | Variable
+  | TypeDef
+  | Call
+  | AssignmentStatement
+  | IfBlock
+  | Class
+  | Return
+}
+
+// Accesible Modifiers
+AccMod = { "bar " }
+
+// Loops
+LoopKwd = _{ "repeatdatshid" }
+Loop    =  { LoopKwd ~ Block }
+Break   =  { "sthu" }
+
+// Functions
+FunctionKwd  = _{ "callmeonmycellphone " }
+Function     =  { FunctionMods ~ FunctionKwd ~ Declaration ~ FunctionArgs? ~ Block }
+FunctionMod  = _{ "debug " | AccMod }
+FunctionMods =  { FunctionMod* }
+FunctionArg  = _{ Declaration ~ "," }
+FunctionArgs =  { "(" ~ FunctionArg* ~ ")" }
+Return       =  { "spez " ~ Expr }
+
+// Identifiers and Declarations
+Declaration =  { TypedIdent | Ident }
+Ident       = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+// If, Else If, Else
+IfKwd     = _{ "is" }
+ElseIfKwd = _{ "but" }
+ElseKwd   = _{ "isnt" }
+If        =  { IfKwd ~ Expr ~ Block }
+ElseIf    =  { ElseIfKwd ~ Expr ~ Block }
+Else      =  { ElseKwd ~ Block }
+IfBlock   =  { If ~ ElseIf* ~ Else? }
+
+// Calls
+Call     =  { "call " ~ Ident ~ CallArgs? }
+CallArg  = _{ Expr ~ "," }
+CallArgs =  { "(" ~ CallArg* ~ ")" }
+
+// Exprs
+ConditionalExpr =  { Term ~ (ConditionalOperator ~ Term)+ }
+BinaryExpr      =  { Term ~ (MathOperator ~ Term)+ }
+IndexingExpr    =  { Term ~ "[" ~ (UInt | Ident) ~ "]" }
+Expr            =  {
+    ConditionalExpr
+  | BinaryExpr
+  | IndexingExpr
+  | Term
+}
+Term            = _{ Ident | Number | String | "(" ~ Expr ~ ")" }
+
+// Types
+TypedIdentKwd = _{ "damn " }
+TypedIdent    = _{ Ident ~ TypedIdentKwd ~ Type }
+TypeDefKwd    = _{ "specimin" }
+TypeGeneric   = _{ ("(" ~ (Ident ~ ",")* ~ ") ")? }
+TypeDef       =  { TypeDefKwd ~ TypeGeneric ~ Ident ~ Assignment ~ Expr }
+Type          =  { Ident ~ TypeGeneric }
+
+// Throw, Try, Catch
+Throw    = { "shoot" ~ Ident }
+Catch    = { "wall" ~ Block }
+Try      = { "test" ~ Block }
+TryCatch = { Try ~ Catch }
+
+// Modules
+ImportKwd = _{ "weneed" | "bringme" }
+ModuleKwd = _{ "subreddit" }
+Module    =  { ModuleKwd ~ "r/" ~ Ident }
+Import    =  { ImportKwd ~ String }
+
+// Variables
+VariableKwd         = _{ "meth" }
+Variable            =  { AccMod* ~ VariableKwd ~ Declaration ~ Assignment ~ Expr }
+AssignmentStatement =  {
+    Ident ~ Assignment ~ Expr
+}
+
+// Operators
+// Conditional
+Equality = { "⅀" }
+
+// Math
+Add      = { "⨋" }
+Subtract = { "-" }
+Multiply = { "*" }
+Divide   = { "⎲" }
+XOR      = { "⊕" }
+
+// Other
+Assignment = _{ "∑" }
+Amongus    =  { "ඞ" }
+
+UnaryOperator       = _{ Add | Subtract }
+ConditionalOperator =  { Equality }
+MathOperator        =  { UnaryOperator | Multiply | Divide | XOR }
+OtherOperator       =  { Amongus }
+
+// Class
+ClassKwd = _{ "school " }
+Class    =  { ClassKwd ~ Ident ~ Block }
+
+// Primitives
+String        = ${ Quote ~ StringContent ~ Quote }
+StringContent = _{ Char* }
+Char          = _{
+    !("\"" | "\\") ~ ANY
+  | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+  | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+
+UInt     = @{ ASCII_DIGIT+ }
+Int      = @{ UnaryOperator? ~ UInt }
+UDecimal = @{ UInt ~ "." ~ ASCII_DIGIT+ }
+Decimal  = @{ Int ~ "." ~ ASCII_DIGIT+ }
+Number   =  {
+    Decimal
+  | Int
+}
+UNumber  =  {
+    UDecimal
+  | UInt
+}
+
+Flag  = { Ident ~ "|" }
+Flags = { Flag+ }
+
+// Misc
+Block =  { "{" ~ Statements? ~ "}" }
+Quote = _{ "\"" | "\'" }
