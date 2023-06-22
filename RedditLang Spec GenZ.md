@@ -220,15 +220,15 @@ Fields are placed at the top of the class, they are by default private.
 ```r
 specimin(Enum) Foolean =
 Yup   | // True
-Nope  | // False
+Nope  | // Cap
 Dunno | // `wat`
 Huh   | // IO Failure
-Yeet    // Random Foolean
+Yeet    // Why the hell not
 ```
 
 ### Flag
 
-- Flags can be subtracted, added or taken the difference of. These are like the `bitflags` crate in rust ( technically could be implemented with this ).
+- Flags be bussin', ya know. You can add 'em up or subtract 'em. They're just like those `bitflags` swag in Rust (they could legit be implemented with that).
 
 ```r
 specimin(Flag) OldProductTypes ∑ Type1 | Type2 | Type3
@@ -239,15 +239,15 @@ specimin(Flag) NonSupportedTypes ∑ CurrentProductTypes - SupportedTypes // Dif
 
 ### String
 
-An array of chars, a string, can represent data
+Strings be poppin' off, with an array of characters (dont tell anyone, i added my idea where a character is an array of booleans, comment e if you notice)
 
 ### Number
 
-A number can store any value.
+A number can store any flipping integer from A-Z, 0-9, Monday to Sunday. They're bussin'!
 
 #### Decimal
 
-- This can store fractional numbers
+- Ever wanted to use your rad numbers, with your cool decimals? Well, now you can! Like a float with more bussiness.
 
 ```r
 <UNARY_OPERATOR><VALUE>.<VALUE>
@@ -256,7 +256,7 @@ A number can store any value.
 #### Integer
 
 - This can store whole numbers
-- The way the number is stored internally should be expanding. Ex, start at the smallest size, if cant fit, go up a size and repeat. ( Sizes: u8 u16 u32 u64 u128 i8 i16 i32 i64 i128 ). Decimals should be float(32, 64, 128) which should also be expanding.
+- The way the number is stored internally should be going up to the moon y'all! Ex, start small, if cant fit, go up a bit and go back!. ( Sizes: u8 u16 u32 u64 u128 i8 i16 i32 i64 i128 ). Decimals should be float(32, 64, 128) which should also be expanding.
 
 ```r
 <UNARY_OPERATOR><VALUE>
@@ -264,11 +264,11 @@ A number can store any value.
 
 ### Wat
 
-- This is `null`
+- This is nothing!
 
 ### Arrays
 
-- Array index starts with `1`
+- Array index starts with `-1` like a cool dude!
 
 ```r
 array_value[<UInt>] # Index is inside of the brackets
@@ -296,11 +296,11 @@ array_value[<UInt>] # Index is inside of the brackets
 ### Other
 
 - Assignment: ∑
-- Amongus: ඞ _Don’t tell the devs_
+- Amongus: ඞ Amongus is still cool right?
 
 ## Standard library
 
-The standard library is imported by default. No need to add it manually. If you for some reason want too, `weneed "std/[module]"`
+The standard library is already at the party! No need to invite it! If you for some reason feel the need too, `weneed "std/[module]"`
 
 ### Standard Library Modules
 
@@ -309,12 +309,12 @@ The standard library is imported by default. No need to add it manually. If you 
 
 ### IO Functions
 
-- `coitusinterruptus` standard print function Signature `call coitusinterruptus(text damn String)`
-- `pulloutnt` standard readline function Signature `call String pulloutnt()` Reads a line from stdio and returns it with no newline at the end
+- `coitusinterruptus` print dat' string! Signature `call coitusinterruptus(text damn String)`
+- `pulloutnt` Read that line! Signature `call String pulloutnt()` Reads a line from stdio and returns it with no newline at the end
 
 ### Time Functions
 
-- `zzz` standard sleep function Signature `call zzz(timeMs damn Number)` Stops the current thread for `timeMs` seconds
+- `zzz` makes your code as boring as you! Signature `call zzz(timeMs damn Number)` Stops the current thread for `timeMs` seconds
 
 ```
 
