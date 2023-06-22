@@ -1,4 +1,4 @@
-# RedditLang 2023.0.1.6-rc.1
+# RedditLang 2023.0.1.6-rc.2
 
 This is a high level overview of redditlang’s syntax and features. It is organized by the header being the feature, a list of implementation notes, the actual syntax and then footnotes.
 
@@ -103,14 +103,6 @@ spez <EXPR>
 - **`debug` modifier**: Will print every variable and when it changed to the console. Only works in debug builds when the `jesse` debugger is used is ran with `walter`.
 - **`bar` modifier**: Makes the function public to its scope
 
-## Arrays
-
-- Array index starts with `1`
-
-```r
-array_value[<UInt>] # Index is inside of the brackets
-```
-
 ## Identifier Policy
 
 - All `<IDENT>`'s will have a max length of 25 characters. A bullet ( `AntiJavaException` ) will be shot if this rule is broken.
@@ -186,18 +178,15 @@ A term is an identifier, number, string, or `(<EXPRESSION>)`
 - New types are marked with `specimin <NAME>`
 - Type aliases with inheritance are marked with `specimin(<INHERITING TYPES>) <NAME>`
 - Typing a variable or function return type is optional.
+- Types that are an `Array` have a `[]` after it
 
 ```r
 specimin(Flags) Week = Mon | Tue | Wed | Thu | Fri | Sat | Sun
 ```
 
-### Generics
-
 ```r
-<TYPE>(<T*>)
+<TYPE>[]
 ```
-
-- T is a comma seperated list of types
 
 ## Classes
 
@@ -254,11 +243,11 @@ specimin(Flag) NonSupportedTypes ∑ CurrentProductTypes - SupportedTypes // Dif
 
 An array of chars, a string, can represent data
 
-## Number
+### Number
 
 A number can store any value.
 
-### Decimal
+#### Decimal
 
 - This can store fractional numbers
 
@@ -266,7 +255,7 @@ A number can store any value.
 <UNARY_OPERATOR><VALUE>.<VALUE>
 ```
 
-### Integer
+#### Integer
 
 - This can store whole numbers
 - The way the number is stored internally should be expanding. Ex, start at the smallest size, if cant fit, go up a size and repeat. ( Sizes: u8 u16 u32 u64 u128 i8 i16 i32 i64 i128 ). Decimals should be float(32, 64, 128) which should also be expanding.
@@ -278,6 +267,14 @@ A number can store any value.
 ### Wat
 
 - This is `null`
+
+### Arrays
+
+- Array index starts with `1`
+
+```r
+array_value[<UInt>] # Index is inside of the brackets
+```
 
 ## Operators
 

@@ -12,21 +12,18 @@ Statement  =  {
     Loop
   | Break
   | Function
+  | Call
   | TryCatch
   | Throw
   | Import
   | Module
   | Variable
   | TypeDef
-  | Call
   | AssignmentStatement
   | IfBlock
   | Class
   | Return
 }
-
-// Accesible Modifiers
-AccMod = { "bar " }
 
 // Loops
 LoopKwd = _{ "repeatdatshid" }
@@ -36,7 +33,7 @@ Break   =  { "sthu" }
 // Functions
 FunctionKwd  = _{ "callmeonmycellphone " }
 Function     =  { FunctionMods ~ FunctionKwd ~ Declaration ~ FunctionArgs? ~ Block }
-FunctionMod  = _{ "debug " | AccMod }
+FunctionMod  =  { "debug " | "bar " }
 FunctionMods =  { FunctionMod* }
 FunctionArg  = _{ Declaration ~ "," }
 FunctionArgs =  { "(" ~ FunctionArg* ~ ")" }
@@ -76,9 +73,10 @@ Term            = _{ Ident | Number | String | "(" ~ Expr ~ ")" }
 TypedIdentKwd = _{ "damn " }
 TypedIdent    = _{ Ident ~ TypedIdentKwd ~ Type }
 TypeDefKwd    = _{ "specimin" }
-TypeGeneric   = _{ ("(" ~ (Ident ~ ",")* ~ ") ")? }
-TypeDef       =  { TypeDefKwd ~ TypeGeneric ~ Ident ~ Assignment ~ Expr }
-Type          =  { Ident ~ TypeGeneric }
+TypeDefInhrt  = _{ ("(" ~ (Ident ~ ",")* ~ ") ")? }
+TypeDef       =  { TypeDefKwd ~ TypeDefInhrt ~ Ident ~ Assignment ~ Expr }
+TypeArray     =  { "[]" }
+Type          =  { Ident ~ TypeArray? }
 
 // Throw, Try, Catch
 Throw    = { "shoot" ~ Ident }
@@ -94,7 +92,7 @@ Import    =  { ImportKwd ~ String }
 
 // Variables
 VariableKwd         = _{ "meth" }
-Variable            =  { AccMod* ~ VariableKwd ~ Declaration ~ Assignment ~ Expr }
+Variable            =  { ("bar ")* ~ VariableKwd ~ Declaration ~ Assignment ~ Expr }
 AssignmentStatement =  {
     Ident ~ Assignment ~ Expr
 }
@@ -130,6 +128,7 @@ Char          = _{
     !("\"" | "\\") ~ ANY
   | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
   | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+  | "\\" ~ ("x" ~ ASCII_HEX_DIGIT{2})
 }
 
 UInt     = @{ ASCII_DIGIT+ }
