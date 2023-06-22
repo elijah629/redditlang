@@ -4,7 +4,7 @@ This is a high level overview of redditlang’s syntax and features. It is organ
 
 If you are ever confused please see the official PEG grammar file that should be included with this document.
 
-## Conventions
+## Syntax rules and document conventions
 
 These are some common phrases or terms used in this document that refer to parts of the parser
 
