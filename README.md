@@ -1,20 +1,21 @@
-# redditlang
-PHP++ short for redditlang is a language created by the r/ProgrammerHumor subreddit discord members 
+# RedditLang
 
-## Why use Redditlang?
+<img src="redditLang.png" height="100"/>
+
+**PHL** ( ProgrammerHumor language ) or **RedditLang** is a language created by the r/ProgrammerHumor discord!
+
+The spec is avaliable [here](./RedditLang%20Spec.md)
+
+## Why Redditlang?
+
 Redditlang is
-- 🔥 blazingly fast, running with a chromium webview, wrapped in a windows 11 VM for **maximum** security
-- 🎮 cross platform compiling to many amazing languages such as
-  - CSS
-  - Brainf*ck
-  - Emacs Lisp
-  - Vimscript
-  - Code.org Minecraft Hour of Code
-- Redditlang is the most opinionated language out there, forcing only the best of practices. For example, if you use inline macros, the police will be called and informed a fire has broken out at your home.
-- 🧠 only the best memory management solution. using pointers, we allow you to optimise memory to the redditbyte*.
-**roughly equivalent to 512 Megabytes*
 
+- 🔥 blazingly fast
+- 🎮 cross platform
+- Redditlang is the most opinionated language out there, forcing only the best of practices. For example, if you use inline macros, the police will be called and informed a fire has broken out at your home.\*
 
-So what are you waiting for? Please invest your life savings in this!*
+So what are you waiting for? Please invest your life savings in this!
+_[Check out the VS Code support development here](https://github.com/Roizor/redditlang-vscode)_
 
-**Compiler coming soon*
+\*_Compiler\*\* is WIP, if you are looking for it. It will be here_  
+\*\*_It may be Interpreted or JIT, but that is implementation specific_
