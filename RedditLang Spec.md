@@ -1,4 +1,3 @@
-**note**: We at redditlang realize that we have a younger audience, so we have started translating the following section into Gen Z Slang "to make it bussin" [here](./RedditLang%20Spec%20GenZ.md)
 
 # RedditLang 2023.0.1.6-rc.2
 
