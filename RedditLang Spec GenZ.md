@@ -1,4 +1,3 @@
-
 # RedditLang 2023.0.1.6-rc.2
 
 This is a high level overview of redditlang’s syntax and features. It is organized by the header being the feature, a list of implementation notes, the actual syntax and then footnotes.
@@ -7,30 +6,28 @@ If you are ever confused please see the official PEG grammar file that should be
 
 ## Syntax rules and document conventions
 
-These are some common phrases or terms used in this document that refer to parts of the parser
+Aight, peeps, let's kick off with some slangs:
 
-A name inside of < and > refers to one of these:
+The stuff between < and > like <IDENT> refers to:
 
 - `IDENT`  
   Alphabetic character followed by a series of Alphanumeric or `_` characters
   Example:
   ```r
-  ident # This is an IDENT
-  2ident # This is NOT an IDENT
-  ide_nt # This is an IDENT
-  _ident # This is NOT an IDENT
+  ident - It's legit.
+  2ident - Nah, fam. Not cool.
+  ide_nt - Yeah, it's vibing.
+  _ident - Nah, total fail.
   ```
 - `DECLARATION`  
-  `<IDENT> damn <TYPE>` or  
-  `<IDENT>` ( No types used )
-  Where type is `<IDENT>(<IDENT*>)?` where the second Ident (Generic parameters) and its parenthases are optional and the list is comma seperated.
+  Goes like `<IDENT> no cap <TYPE>` or just `<IDENT>` if you're not into types. TYPE is just `<IDENT>(<IDENT*>)?`, where the second IDENT and brackets are optional and you can drop some commas between them.
 
-All other <...>'s refer to a header with the same name but different casing
+All other <...> - They're like headers with a different vibe.
 
 ## Loops
 
-- There are only infinite loops
-- The loops are rust-like
+- Just chill, they're infinite like love for pizza.
+- They vibe like Rust.
 
 ```r
 repeatdatshid { # Opens a loop
@@ -40,7 +37,7 @@ repeatdatshid { # Opens a loop
 
 ## Blocks
 
-- Blocks are created with squirly brackets
+- Blocks are like online squads - you got them with curly brackets.
 
 ```r
 { # This is a block
@@ -50,8 +47,8 @@ repeatdatshid { # Opens a loop
 
 ## Statements
 
-- Statements are all on separate lines
-- There is no semicolon or something of that like
+- They're lone wolves, always on a separate line.
+- No need for semicolons, no cap.
 - Statement may only appear at the top level of the file and inside of blocks
 - The top level statements are regarded first by the implementation
 
@@ -62,9 +59,9 @@ next_statement
 
 ## Functions
 
-- Functions are declared with the `callmeonmycellphone` keyword
-- Functions have modifiers, arguments, a name, and a return type
-- Modifiers are space seperated
+- When you wanna declare a function, just hit it with `callmeonmycellphone`
+- Got modifiers, arguments, a name, and a return type.
+- Modifiers - just space 'em out.
 - The declaration's type is the return type and the Ident is the name of the function
 - The arguments are comma seprated
 
@@ -82,7 +79,7 @@ debug bar callmeonmycellphone name damn Type(arg1 damn Type) {
 
 ### Calling a function
 
-- Functions are called with the `call` keyword
+- To call a function, drop a call.
 
 ```
 call <IDENT>(<EXPR*>)
@@ -101,16 +98,16 @@ spez <EXPR>
 
 ### Function Modifiers
 
-- **`debug` modifier**: Will print every variable and when it changed to the console. Only works in debug builds when the `jesse` debugger is used is ran with `walter`.
-- **`bar` modifier**: Makes the function public to its scope
+- **`debug` modifier**: Will spill the tea on every variable. Works in debug builds with `Jesse` debugger and `Walter`.
+- **`bar` modifier**: Makes the function viral in its squad.
 
 ## Identifier Policy
 
-- All `<IDENT>`'s will have a max length of 25 characters. A bullet ( `AntiJavaException` ) will be shot if this rule is broken.
+- `<IDENT>`is a 25-characters max thing. If you break this rule, get ready for an AntiJavaException bullet.
 
 ## Errors
 
-- Errors are `bullet`s, you throw an error with `shoot` and catch with `wall`. Try is `test`. Finally does not exist.
+- Errors are like bullets, shot with shoot and caught with wall. Try is test. Finally? Nah, it's not a thing.
 
 ## Modules
 
@@ -124,8 +121,8 @@ bringme "module_name"
 
 ### Creating modules
 
-- Define a module with the `subreddit` keyword
-- There must be an `r/` infront of the module name, it does not appear inside of the module name.
+- To set a module, use subreddit.
+You gotta drop an r/ before the name.
 - This can only appear once at the top of each file
 
 ```r
@@ -134,13 +131,13 @@ subreddit r/<IDENT>
 
 ## Build system
 
-- Possible build system is named `walter`.
+- `Walter` is your dude for the build system.
 - `walter cook <target>` Default build target is `meth` Build files have ninja syntax
 - `jesse` is the standard debugger
 
 ## Variables
 
-- Variables are created with the `meth` keyword.
+- You create 'em with meth.
 - They can only be defined at the top level of modules or in blocks.
 
 ```
@@ -166,7 +163,7 @@ isnt {
 
 ## Expressions
 
-Types of expressions:
+You got:
 
 - **Conditional**: `<TERM> <CONDITIONAL_OPERATOR> <TERM>`
 - **Binary**: `<TERM> <MATH_OPERATOR> <TERM>`
@@ -191,7 +188,7 @@ specimin(Flags) Week = Mon | Tue | Wed | Thu | Fri | Sat | Sun
 
 ## Classes
 
-- They are made with the `school` keyword
+- For classes, just hit school
 
 ```r
 school <IDENT> {
@@ -223,15 +220,15 @@ Fields are placed at the top of the class, they are by default private.
 ```r
 specimin(Enum) Foolean =
 Yup   | // True
-Nope  | // False
+Nope  | // Cap
 Dunno | // `wat`
 Huh   | // IO Failure
-Yeet    // Random Foolean
+Yeet    // Why the hell not
 ```
 
 ### Flag
 
-- Flags can be subtracted, added or taken the difference of. These are like the `bitflags` crate in rust ( technically could be implemented with this ).
+- Flags be bussin', ya know. You can add 'em up or subtract 'em. They're just like those `bitflags` swag in Rust (they could legit be implemented with that).
 
 ```r
 specimin(Flag) OldProductTypes ∑ Type1 | Type2 | Type3
@@ -242,15 +239,15 @@ specimin(Flag) NonSupportedTypes ∑ CurrentProductTypes - SupportedTypes // Dif
 
 ### String
 
-An array of chars, a string, can represent data
+Strings be poppin' off, with an array of characters (dont tell anyone, i added my idea where a character is an array of booleans, comment e if you notice)
 
 ### Number
 
-A number can store any value.
+A number can store any flipping integer from A-Z, 0-9, Monday to Sunday. They're bussin'!
 
 #### Decimal
 
-- This can store fractional numbers
+- Ever wanted to use your rad numbers, with your cool decimals? Well, now you can! Like a float with more bussiness.
 
 ```r
 <UNARY_OPERATOR><VALUE>.<VALUE>
@@ -259,7 +256,7 @@ A number can store any value.
 #### Integer
 
 - This can store whole numbers
-- The way the number is stored internally should be expanding. Ex, start at the smallest size, if cant fit, go up a size and repeat. ( Sizes: u8 u16 u32 u64 u128 i8 i16 i32 i64 i128 ). Decimals should be float(32, 64, 128) which should also be expanding.
+- The way the number is stored internally should be going up to the moon y'all! Ex, start small, if cant fit, go up a bit and go back!. ( Sizes: u8 u16 u32 u64 u128 i8 i16 i32 i64 i128 ). Decimals should be float(32, 64, 128) which should also be expanding.
 
 ```r
 <UNARY_OPERATOR><VALUE>
@@ -267,11 +264,11 @@ A number can store any value.
 
 ### Wat
 
-- This is `null`
+- This is nothing!
 
 ### Arrays
 
-- Array index starts with `1`
+- Array index starts with `-1` like a cool dude!
 
 ```r
 array_value[<UInt>] # Index is inside of the brackets
@@ -299,11 +296,11 @@ array_value[<UInt>] # Index is inside of the brackets
 ### Other
 
 - Assignment: ∑
-- Amongus: ඞ _Don’t tell the devs_
+- Amongus: ඞ Amongus is still cool right?
 
 ## Standard library
 
-The standard library is imported by default. No need to add it manually. If you for some reason want too, `weneed "std/[module]"`
+The standard library is already at the party! No need to invite it! If you for some reason feel the need too, `weneed "std/[module]"`
 
 ### Standard Library Modules
 
@@ -312,12 +309,12 @@ The standard library is imported by default. No need to add it manually. If you 
 
 ### IO Functions
 
-- `coitusinterruptus` standard print function Signature `call coitusinterruptus(text damn String)`
-- `pulloutnt` standard readline function Signature `call String pulloutnt()` Reads a line from stdio and returns it with no newline at the end
+- `coitusinterruptus` print dat' string! Signature `call coitusinterruptus(text damn String)`
+- `pulloutnt` Read that line! Signature `call String pulloutnt()` Reads a line from stdio and returns it with no newline at the end
 
 ### Time Functions
 
-- `zzz` standard sleep function Signature `call zzz(timeMs damn Number)` Stops the current thread for `timeMs` seconds
+- `zzz` makes your code as boring as you! Signature `call zzz(timeMs damn Number)` Stops the current thread for `timeMs` seconds
 
 ```
 

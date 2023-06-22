@@ -19,3 +19,4 @@ _[Check out the VS Code support development here](https://github.com/Roizor/redd
 
 \*_Compiler\*\* is WIP, if you are looking for it. It will be here_  
 \*\*_It may be Interpreted or JIT, but that is implementation specific_
+**note**: We at redditlang realize that we have a younger audience, so we have started translating the spec into Gen Z Slang "to make it bussin" [here](./RedditLang%20Spec%20GenZ.md)
