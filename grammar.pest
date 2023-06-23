@@ -33,7 +33,7 @@ Break   =  { "sthu" }
 // Functions
 FunctionKwd  = _{ "callmeonmycellphone " }
 Function     =  { FunctionMods ~ FunctionKwd ~ Declaration ~ FunctionArgs? ~ Block }
-FunctionMod  =  { "debug " | "bar " }
+FunctionMod  =  { "debug " | AccessibilityModifier }
 FunctionMods =  { FunctionMod* }
 FunctionArg  = _{ Declaration ~ "," }
 FunctionArgs =  { "(" ~ FunctionArg* ~ ")" }
@@ -79,7 +79,7 @@ TypeArray     =  { "[]" }
 Type          =  { Ident ~ TypeArray? }
 
 // Throw, Try, Catch
-Throw    = { "shoot" ~ Ident }
+Throw    = { "shoot " ~ Term }
 Catch    = { "wall" ~ Block }
 Try      = { "test" ~ Block }
 TryCatch = { Try ~ Catch }
@@ -90,9 +90,13 @@ ModuleKwd = _{ "subreddit" }
 Module    =  { ModuleKwd ~ "r/" ~ Ident }
 Import    =  { ImportKwd ~ String }
 
+// Modifiers
+AccessibilityModifier = { "bar " }
+
 // Variables
 VariableKwd         = _{ "meth" }
-Variable            =  { ("bar ")* ~ VariableKwd ~ Declaration ~ Assignment ~ Expr }
+VariableMods        =  { AccessibilityModifier* }
+Variable            =  { VariableMods ~ VariableKwd ~ Declaration ~ Assignment ~ Expr }
 AssignmentStatement =  {
     Ident ~ Assignment ~ Expr
 }
@@ -133,15 +137,10 @@ Char          = _{
 
 UInt     = @{ ASCII_DIGIT+ }
 Int      = @{ UnaryOperator? ~ UInt }
-UDecimal = @{ UInt ~ "." ~ ASCII_DIGIT+ }
 Decimal  = @{ Int ~ "." ~ ASCII_DIGIT+ }
-Number   =  {
+Number   = @{
     Decimal
   | Int
-}
-UNumber  =  {
-    UDecimal
-  | UInt
 }
 
 Flag  = { Ident ~ "|" }
