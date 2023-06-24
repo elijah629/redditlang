@@ -1,7 +1,8 @@
 use crate::errors::error;
 use crate::parser::{
-    parse, parse_one, BinaryExpr, BinaryExprTerm, Break, Call, Declaration, Function, Import, Loop,
-    MathOperator, Module, Node, Term, Throw, TryCatch, Type, Variable,
+    parse, parse_one, BinaryExpr, BinaryExprTerm, Break, Call, Declaration, Function, FunctionMod,
+    Import, Loop, MathOperator, Module, Node, Term, Throw, TryCatch, Type, TypeDef, Variable,
+    VariableMod,
 };
 use crate::utils::is_unique;
 use crate::Rule;
@@ -27,12 +28,23 @@ impl Parse for Declaration {
 
 impl Parse for Function {
     fn parse_from(pair: Pair<'_, Rule>) -> Self {
+        let start_pos = pair.as_span().start_pos();
         let mut inner = pair.into_inner();
-        let modifiers: Vec<String> = inner
+        let modifiers: Vec<FunctionMod> = inner
             .next()
             .unwrap()
             .into_inner()
             .map(|modifier| modifier.as_str().trim_end().to_string())
+            .map(|modifier| match modifier.as_str() {
+                "debug" => FunctionMod::Debug,
+                "bar" => FunctionMod::Public,
+                _ => error(Error::new_from_pos(
+                    pest::error::ErrorVariant::CustomError {
+                        message: "Invalid modifier".to_owned(),
+                    },
+                    start_pos,
+                )),
+            })
             .collect();
 
         let declaration = Declaration::parse_from(inner.next().unwrap());
@@ -162,14 +174,35 @@ impl Parse for Variable {
     fn parse_from(pair: Pair<'_, Rule>) -> Self {
         let start_pos = pair.as_span().start_pos();
         let mut inner = pair.into_inner();
-        let modifiers: Vec<String> = inner
+        let modifiers: Vec<VariableMod> = inner
             .next()
             .unwrap()
             .into_inner()
             .map(|modifier| modifier.as_str().trim_end().to_string())
+            .map(|modifier| match modifier.as_str() {
+                "bar" => VariableMod::Public,
+                _ => error(Error::new_from_pos(
+                    pest::error::ErrorVariant::CustomError {
+                        message: "Invalid modifier".to_owned(),
+                    },
+                    start_pos,
+                )),
+            })
             .collect();
         let declaration = Declaration::parse_from(inner.next().unwrap());
-        let value = parse_one(inner.next().unwrap()).unwrap();
+        let value = parse_one(inner.next().unwrap());
+
+        if value.is_none() {
+            error(Error::new_from_pos(
+                pest::error::ErrorVariant::CustomError {
+                    message: "Invalid value type".to_owned(),
+                },
+                start_pos,
+            ));
+        }
+
+        let value = value.unwrap();
+
         let value = match value {
             Node::Expr(x) => x,
             _ => error(Error::new_from_pos(
@@ -211,4 +244,16 @@ impl Parse for BinaryExpr {
     }
 }
 
-// TODO: MORE STATEMENTS + EXPRS, AND MAKE MODIFIERS AN ENUM
+impl Parse for TypeDef {
+    /// MIGHT REMOVE
+    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+        // let mut inner = pair.into_inner();
+        // let name = inner.next().unwrap().as_str();
+        // // let value = parse_one(inner.next().unwrap());
+
+        // println!("{:?}\n{:?}", name, inner.next().unwrap());
+        todo!()
+    }
+}
+
+// TODO: MORE STATEMENTS + EXPRS

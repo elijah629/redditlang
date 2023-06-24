@@ -68,14 +68,15 @@ Expr            =  {
   | Term
 }
 Literal         = _{ Number | String | Foolean | Boolean | Null }
-Term            = _{ Ident | Literal | "(" ~ Expr ~ ")" }
+Term            = _{ Literal | Ident  | "(" ~ Expr ~ ")" }
 
 // Types
 TypedIdentKwd = _{ "damn " }
 TypedIdent    = _{ Ident ~ TypedIdentKwd ~ Type }
 TypeDefKwd    = _{ "specimin" }
 TypeDefInhrt  = _{ ("(" ~ (Ident ~ ",")* ~ ") ")? }
-TypeDef       =  { TypeDefKwd ~ TypeDefInhrt ~ Ident ~ Assignment ~ Expr }
+/// MIGHT BE REMOVED
+TypeDef       =  { TypeDefKwd ~ TypeDefInhrt ~ Ident ~ Assignment ~ Literal }
 TypeArray     =  { "[]" }
 Type          =  { Ident ~ TypeArray? }
 

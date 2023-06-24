@@ -30,10 +30,16 @@ pub struct Break;
 
 #[derive(Debug)]
 pub struct Function {
-    pub modifiers: Vec<String>,
+    pub modifiers: Vec<FunctionMod>,
     pub declaration: Declaration,
     pub args: Vec<Declaration>,
-    pub body: Tree, // body: pest::iterators::Pair<'a, Rule>, //  TODO: Make this a node, so its recursive
+    pub body: Tree,
+}
+
+#[derive(Debug)]
+pub enum FunctionMod {
+    Debug,
+    Public,
 }
 
 #[derive(Debug)]
@@ -65,10 +71,18 @@ pub struct TryCatch {
 
 #[derive(Debug)]
 pub struct Variable {
-    pub modifiers: Vec<String>,
+    pub modifiers: Vec<VariableMod>,
     pub declaration: Declaration,
     pub value: Expr,
 }
+
+#[derive(Debug)]
+pub enum VariableMod {
+    Public,
+}
+
+#[derive(Debug)]
+pub struct TypeDef {}
 
 // Operators
 #[derive(Debug)]
@@ -97,6 +111,7 @@ pub struct BinaryExprTerm {
 #[derive(Debug)]
 pub enum Expr {
     BinaryExpr(BinaryExpr),
+    Null,
 }
 
 // AST
@@ -111,6 +126,7 @@ pub enum Node {
     Module(Module),
     TryCatch(TryCatch),
     Variable(Variable),
+    TypeDef(TypeDef),
     Expr(Expr),
 }
 
@@ -130,6 +146,7 @@ pub fn parse_one(pair: pest::iterators::Pair<'_, Rule>) -> Option<Node> {
                 Rule::Module => Some(Node::Module(Module::parse_from(statement))),
                 Rule::TryCatch => Some(Node::TryCatch(TryCatch::parse_from(statement))),
                 Rule::Variable => Some(Node::Variable(Variable::parse_from(statement))),
+                // Rule::TypeDef => Some(Node::TypeDef(TypeDef::parse_from(statement))), // MIGHT REMOVE FROM SPEC
                 _ => None,
             }
         }
@@ -140,9 +157,11 @@ pub fn parse_one(pair: pest::iterators::Pair<'_, Rule>) -> Option<Node> {
                 Rule::BinaryExpr => Some(Node::Expr(Expr::BinaryExpr(BinaryExpr::parse_from(
                     expression,
                 )))),
+                Rule::Null => Some(Node::Expr(Expr::Null)),
                 _ => None,
             }
         }
+
         _ => None,
     }
 }
