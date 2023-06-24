@@ -1,7 +1,7 @@
-#*debug bar callmeonmycellphone split damn String[](x damn String,) {
+debug bar callmeonmycellphone split damn String[](x damn String, x2 damn String,) {
     
 }
-call coitusinterruptus("Hello, World",)
+#*call coitusinterruptus("Hello, World",)
 sthu
 repeatdatshid {
 
@@ -12,4 +12,4 @@ subreddit r/ProgammerHumor
 test {
     sthu
 } wall {}*#
-bar meth name damn String ∑ 2 - 2
+# bar meth name damn String ∑ 2 - 2 - 3

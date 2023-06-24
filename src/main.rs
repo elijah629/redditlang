@@ -20,5 +20,5 @@ fn main() {
         println!("{}", format_error(error));
         return;
     }
-    println!("{:#?}", parse(pairs.unwrap()));
+    println!("{:?}", parse(pairs.unwrap()));
 }

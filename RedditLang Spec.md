@@ -1,4 +1,3 @@
-
 # RedditLang 2023.0.1.6-rc.2
 
 This is a high level overview of redditlang’s syntax and features. It is organized by the header being the feature, a list of implementation notes, the actual syntax and then footnotes.
@@ -216,15 +215,25 @@ Fields are placed at the top of the class, they are by default private.
 
 ## Primitive types
 
+### "Boolean"
+
+- This is a `Yes or No` question
+
+```r
+specimin(Enum) Boolean =
+Yup   | // True
+Nope    // False
+```
+
 ### Foolean
 
 - Boolean type but very foolish
 
 ```r
-specimin(Enum) Foolean =
+specimin(Flags) Foolean =
 Yup   | // True
 Nope  | // False
-Dunno | // `wat`
+IDK   | // Null
 Huh   | // IO Failure
 Yeet    // Random Foolean
 ```
@@ -282,6 +291,7 @@ array_value[<UInt>] # Index is inside of the brackets
 ### Conditional
 
 - Equality: ⅀
+- Anti-Equality: ≠
 
 ### Math
 
@@ -295,11 +305,11 @@ array_value[<UInt>] # Index is inside of the brackets
 
 - Positive: ⨋
 - Negative: -
+- Negation: ¡
 
 ### Other
 
 - Assignment: ∑
-- Amongus: ඞ _Don’t tell the devs_
 
 ## Standard library
 

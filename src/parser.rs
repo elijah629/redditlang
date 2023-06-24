@@ -84,9 +84,14 @@ pub enum MathOperator {
 
 #[derive(Debug)]
 pub struct BinaryExpr {
-    pub l_operand: Term,
-    pub operator: MathOperator,
-    pub r_operand: Term,
+    pub terms: Vec<BinaryExprTerm>,
+}
+
+#[derive(Debug)]
+pub struct BinaryExprTerm {
+    pub operand: Term,
+    /// None on the last term
+    pub operator: Option<MathOperator>,
 }
 
 #[derive(Debug)]

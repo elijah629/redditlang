@@ -67,7 +67,8 @@ Expr            =  {
   | IndexingExpr
   | Term
 }
-Term            = _{ Ident | Number | String | "(" ~ Expr ~ ")" }
+Literal         = _{ Number | String | Foolean | Boolean | Null }
+Term            = _{ Ident | Literal | "(" ~ Expr ~ ")" }
 
 // Types
 TypedIdentKwd = _{ "damn " }
@@ -103,7 +104,8 @@ AssignmentStatement =  {
 
 // Operators
 // Conditional
-Equality = { "⅀" }
+Equality     = { "⅀" }
+AntiEquality = { "≠" }
 
 // Math
 Add      = { "⨋" }
@@ -114,12 +116,11 @@ XOR      = { "⊕" }
 
 // Other
 Assignment = _{ "∑" }
-Amongus    =  { "ඞ" }
+Negation   =  { "¡" }
 
-UnaryOperator       = _{ Add | Subtract }
-ConditionalOperator =  { Equality }
+UnaryOperator       = _{ Add | Subtract | Negation }
+ConditionalOperator =  { Equality | AntiEquality }
 MathOperator        =  { UnaryOperator | Multiply | Divide | XOR }
-OtherOperator       =  { Amongus }
 
 // Class
 ClassKwd = _{ "school " }
@@ -135,16 +136,23 @@ Char          = _{
   | "\\" ~ ("x" ~ ASCII_HEX_DIGIT{2})
 }
 
-UInt     = @{ ASCII_DIGIT+ }
-Int      = @{ UnaryOperator? ~ UInt }
-Decimal  = @{ Int ~ "." ~ ASCII_DIGIT+ }
-Number   = @{
+UInt    = @{ ASCII_DIGIT+ }
+Int     = @{ UnaryOperator? ~ UInt }
+Decimal = @{ Int ~ "." ~ ASCII_DIGIT+ }
+Number  = @{
     Decimal
   | Int
 }
 
-Flag  = { Ident ~ "|" }
-Flags = { Flag+ }
+Null = { "wat" }
+
+True            = { "Yup" }
+False           = { "Nope" }
+Boolean         = { True | False }
+FooleanNull     = { "Dunno" }
+FooleanIOFalure = { "Huh" }
+FooleanRandom   = { "Yeet" }
+Foolean         = { True | False | FooleanNull | FooleanIOFalure | FooleanRandom }
 
 // Misc
 Block =  { "{" ~ Statements? ~ "}" }
