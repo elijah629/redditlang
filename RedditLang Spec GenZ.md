@@ -146,7 +146,7 @@ meth <DECLARATION> ∑ <EXPR>
 
 ## Branching
 
-`is`, `isnt`, and `but` are all used for `if`, `else`, and `elseif` respectively
+`is`, `isnt`, and `but` are all used for `if`, `else`, and `elseif` respectfly
 
 ```
 is <EXPR> {
