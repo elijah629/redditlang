@@ -14,3 +14,4 @@ test {
 } wall {}
 bar meth ame damn String ∑ wat*#
 # specimin a ∑ # TODO: Might remove this entirely
+value ∑ value - 1

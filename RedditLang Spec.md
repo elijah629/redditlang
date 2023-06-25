@@ -13,12 +13,14 @@ A name inside of < and > refers to one of these:
 - `IDENT`  
   Alphabetic character followed by a series of Alphanumeric or `_` characters
   Example:
+
   ```r
   ident # This is an IDENT
   2ident # This is NOT an IDENT
   ide_nt # This is an IDENT
   _ident # This is NOT an IDENT
   ```
+
 - `DECLARATION`  
   `<IDENT> damn <TYPE>` or  
   `<IDENT>` ( No types used )
@@ -83,7 +85,7 @@ debug bar callmeonmycellphone name damn Type(arg1 damn Type) {
 
 - Functions are called with the `call` keyword
 
-```
+```r
 call <IDENT>(<EXPR*>)
 ```
 
@@ -94,7 +96,7 @@ Where `<EXPR*>` is a comma seperated list of expressions
 - Use the `spez` keyword followed by the return value.
 - The type of the return value( if specified ) must match the type of the value after `spez`
 
-```
+```r
 spez <EXPR>
 ```
 
@@ -116,7 +118,7 @@ spez <EXPR>
 - You import a module with `weneed` or `bringme`
 - You specify a string module name after the keyword in quotes
 
-```
+```r
 weneed "module_name"
 bringme "module_name"
 ```
@@ -142,7 +144,7 @@ subreddit r/<IDENT>
 - Variables are created with the `meth` keyword.
 - They can only be defined at the top level of modules or in blocks.
 
-```
+```r
 meth <DECLARATION> ∑ <EXPR>
 ```
 
@@ -150,7 +152,7 @@ meth <DECLARATION> ∑ <EXPR>
 
 `is`, `isnt`, and `but` are all used for `if`, `else`, and `elseif` respectively
 
-```
+```r
 is <EXPR> {
 
 }
@@ -328,7 +330,3 @@ The standard library is imported by default. No need to add it manually. If you 
 ### Time Functions
 
 - `zzz` standard sleep function Signature `call zzz(timeMs damn Number)` Stops the current thread for `timeMs` seconds
-
-```
-
-```

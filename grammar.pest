@@ -18,6 +18,7 @@ Statement  =  {
   | Import
   | Module
   | Variable
+  //REMOVAL: Will be removed. Classes should be used. just add an enum keyword
   | TypeDef
   | AssignmentStatement
   | IfBlock
@@ -41,7 +42,7 @@ Return       =  { "spez " ~ Expr }
 
 // Identifiers and Declarations
 Declaration =  { TypedIdent | Ident }
-Ident       = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+Ident       = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 
 // If, Else If, Else
 IfKwd     = _{ "is" }
@@ -81,7 +82,7 @@ TypeArray     =  { "[]" }
 Type          =  { Ident ~ TypeArray? }
 
 // Throw, Try, Catch
-Throw    = { "shoot " ~ Term }
+Throw    = { "shoot " ~ Expr }
 Catch    = { "wall" ~ Block }
 Try      = { "test" ~ Block }
 TryCatch = { Try ~ Catch }

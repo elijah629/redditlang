@@ -4,17 +4,18 @@ use crate::{from_pair::Parse, Rule};
 pub enum Term {
     Number(i64),
     String(String),
+    Ident(Ident),
 }
 
 #[derive(Debug)]
 pub struct Type {
-    pub ident: String,
+    pub ident: Ident,
     pub is_array: bool,
 }
 
 #[derive(Debug)]
 pub struct Declaration {
-    pub ident: String,
+    pub ident: Ident,
     pub r#type: Option<Type>,
 }
 
@@ -44,13 +45,13 @@ pub enum FunctionMod {
 
 #[derive(Debug)]
 pub struct Call {
-    pub ident: String,
+    pub ident: Ident,
     pub args: Vec<Term>,
 }
 
 #[derive(Debug)]
 pub struct Throw {
-    pub ident: String,
+    pub value: Expr,
 }
 
 #[derive(Debug)]
@@ -60,7 +61,7 @@ pub struct Import {
 
 #[derive(Debug)]
 pub struct Module {
-    pub ident: String,
+    pub ident: Ident,
 }
 
 #[derive(Debug)]
@@ -82,7 +83,10 @@ pub enum VariableMod {
 }
 
 #[derive(Debug)]
-pub struct TypeDef {}
+pub struct Assignment {
+    pub ident: Ident,
+    pub value: Expr,
+}
 
 // Operators
 #[derive(Debug)]
@@ -109,8 +113,12 @@ pub struct BinaryExprTerm {
 }
 
 #[derive(Debug)]
+pub struct Ident(pub String);
+
+#[derive(Debug)]
 pub enum Expr {
     BinaryExpr(BinaryExpr),
+    Ident(Ident),
     Null,
 }
 
@@ -126,7 +134,7 @@ pub enum Node {
     Module(Module),
     TryCatch(TryCatch),
     Variable(Variable),
-    TypeDef(TypeDef),
+    Assignment(Assignment),
     Expr(Expr),
 }
 
@@ -146,7 +154,9 @@ pub fn parse_one(pair: pest::iterators::Pair<'_, Rule>) -> Option<Node> {
                 Rule::Module => Some(Node::Module(Module::parse_from(statement))),
                 Rule::TryCatch => Some(Node::TryCatch(TryCatch::parse_from(statement))),
                 Rule::Variable => Some(Node::Variable(Variable::parse_from(statement))),
-                // Rule::TypeDef => Some(Node::TypeDef(TypeDef::parse_from(statement))), // MIGHT REMOVE FROM SPEC
+                Rule::AssignmentStatement => {
+                    Some(Node::Assignment(Assignment::parse_from(statement)))
+                }
                 _ => None,
             }
         }
@@ -157,6 +167,7 @@ pub fn parse_one(pair: pest::iterators::Pair<'_, Rule>) -> Option<Node> {
                 Rule::BinaryExpr => Some(Node::Expr(Expr::BinaryExpr(BinaryExpr::parse_from(
                     expression,
                 )))),
+                Rule::Ident => Some(Node::Expr(Expr::Ident(Ident::parse_from(expression)))),
                 Rule::Null => Some(Node::Expr(Expr::Null)),
                 _ => None,
             }

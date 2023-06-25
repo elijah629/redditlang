@@ -1,8 +1,8 @@
 use crate::errors::error;
 use crate::parser::{
-    parse, parse_one, BinaryExpr, BinaryExprTerm, Break, Call, Declaration, Function, FunctionMod,
-    Import, Loop, MathOperator, Module, Node, Term, Throw, TryCatch, Type, TypeDef, Variable,
-    VariableMod,
+    parse, parse_one, Assignment, BinaryExpr, BinaryExprTerm, Break, Call, Declaration, Expr,
+    Function, FunctionMod, Ident, Import, Loop, MathOperator, Module, Node, Term, Throw, TryCatch,
+    Type, Variable, VariableMod,
 };
 use crate::utils::is_unique;
 use crate::Rule;
@@ -16,9 +16,9 @@ pub trait Parse {
 impl Parse for Declaration {
     fn parse_from(pair: Pair<'_, Rule>) -> Self {
         let mut inner = pair.into_inner();
-        let ident = inner.next().unwrap().as_str().to_string();
+        let ident = Ident::parse_from(inner.next().unwrap());
         let r#type = inner.next().map(|x| x.into_inner()).map(|mut x| Type {
-            ident: x.next().unwrap().as_str().to_string(),
+            ident: Ident::parse_from(x.next().unwrap()),
             is_array: x.next().is_some(),
         });
 
@@ -57,7 +57,7 @@ impl Parse for Function {
             .collect();
 
         // Check for duplicate argument idents
-        let has_duplicates = !is_unique(args.iter().map(|x| &x.ident));
+        let has_duplicates = !is_unique(args.iter().map(|x| &x.ident.0));
         if has_duplicates {
             error(Error::new_from_pos(
                 pest::error::ErrorVariant::CustomError {
@@ -82,6 +82,7 @@ impl Parse for Term {
         match pair.as_rule() {
             Rule::String => Term::String(enquote::unquote(pair.as_str()).unwrap().to_string()),
             Rule::Number => Term::Number(pair.as_str().parse().unwrap()),
+            Rule::Ident => Term::Ident(Ident::parse_from(pair)),
             _ => error(Error::new_from_pos(
                 pest::error::ErrorVariant::CustomError {
                     message: format!("Unimplemented Term \"{:?}\"", pair.as_rule()).to_owned(),
@@ -95,25 +96,22 @@ impl Parse for Term {
 impl Parse for Module {
     fn parse_from(pair: Pair<'_, Rule>) -> Self {
         let mut inner = pair.into_inner();
-        let module_name = inner.next().unwrap().as_str().to_string();
-        return Module { ident: module_name };
+        let ident = Ident::parse_from(inner.next().unwrap());
+        return Module { ident };
     }
 }
 
 impl Parse for Call {
     fn parse_from(pair: Pair<'_, Rule>) -> Self {
         let mut inner = pair.into_inner();
-        let ident = inner.next().unwrap().as_str().to_string();
-        let fn_args = inner
+        let ident = Ident::parse_from(inner.next().unwrap());
+        let args = inner
             .next()
             .unwrap()
             .into_inner()
             .map(|x| Term::parse_from(x.into_inner().next().unwrap()))
             .collect();
-        Call {
-            ident,
-            args: fn_args,
-        }
+        Call { ident, args }
     }
 }
 
@@ -126,8 +124,8 @@ impl Parse for Break {
 impl Parse for Throw {
     fn parse_from(pair: Pair<'_, Rule>) -> Self {
         let mut inner = pair.into_inner();
-        let ident = inner.next().unwrap().as_str().to_string();
-        Throw { ident }
+        let value = Expr::parse_from(inner.next().unwrap());
+        Throw { value }
     }
 }
 impl Parse for Import {
@@ -190,28 +188,8 @@ impl Parse for Variable {
             })
             .collect();
         let declaration = Declaration::parse_from(inner.next().unwrap());
-        let value = parse_one(inner.next().unwrap());
+        let value = Expr::parse_from(inner.next().unwrap());
 
-        if value.is_none() {
-            error(Error::new_from_pos(
-                pest::error::ErrorVariant::CustomError {
-                    message: "Invalid value type".to_owned(),
-                },
-                start_pos,
-            ));
-        }
-
-        let value = value.unwrap();
-
-        let value = match value {
-            Node::Expr(x) => x,
-            _ => error(Error::new_from_pos(
-                pest::error::ErrorVariant::CustomError {
-                    message: "Value is not an expression".to_owned(),
-                },
-                start_pos,
-            )),
-        };
         Variable {
             modifiers,
             declaration,
@@ -244,15 +222,34 @@ impl Parse for BinaryExpr {
     }
 }
 
-impl Parse for TypeDef {
-    /// MIGHT REMOVE
+impl Parse for Assignment {
     fn parse_from(pair: Pair<'_, Rule>) -> Self {
-        // let mut inner = pair.into_inner();
-        // let name = inner.next().unwrap().as_str();
-        // // let value = parse_one(inner.next().unwrap());
+        let mut inner = pair.into_inner();
+        let ident = Ident::parse_from(inner.next().unwrap());
+        let value = Expr::parse_from(inner.next().unwrap());
+        Assignment { ident, value }
+    }
+}
 
-        // println!("{:?}\n{:?}", name, inner.next().unwrap());
-        todo!()
+impl Parse for Ident {
+    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+        Ident(pair.as_str().to_string())
+    }
+}
+
+impl Parse for Expr {
+    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+        let start_pos = pair.as_span().start_pos();
+        let value = parse_one(pair).unwrap();
+        match value {
+            Node::Expr(x) => x,
+            _ => error(Error::new_from_pos(
+                pest::error::ErrorVariant::CustomError {
+                    message: "Value is not an expression".to_owned(),
+                },
+                start_pos,
+            )),
+        }
     }
 }
 
