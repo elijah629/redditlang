@@ -40,3 +40,6 @@ pub fn error(error: pest::error::Error<Rule>) -> ! {
     println!("{}", format_error(error));
     std::process::exit(1);
 }
+
+pub const ERR_BUG: &str =
+    "Unexpected error. This is a bug, please report this at https://github.com/elijah629/redditlang/issues";

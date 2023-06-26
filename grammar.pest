@@ -17,9 +17,9 @@ Statement  =  {
   | Throw
   | Import
   | Module
-  | Variable
-  //REMOVAL: Will be removed. Classes should be used. just add an enum keyword
-  | TypeDef
+  | Variable // REMOVAL: Will be removed. Classes should be used. just add an enum keyword
+  // | TypeDef
+
   | AssignmentStatement
   | IfBlock
   | Class
@@ -69,17 +69,18 @@ Expr            =  {
   | Term
 }
 Literal         = _{ Number | String | Foolean | Boolean | Null }
-Term            = _{ Literal | Ident  | "(" ~ Expr ~ ")" }
+Term            = _{ Literal | Ident | "(" ~ Expr ~ ")" }
 
 // Types
 TypedIdentKwd = _{ "damn " }
 TypedIdent    = _{ Ident ~ TypedIdentKwd ~ Type }
-TypeDefKwd    = _{ "specimin" }
-TypeDefInhrt  = _{ ("(" ~ (Ident ~ ",")* ~ ") ")? }
+// TypeDefKwd    = _{ "specimin" }
+// TypeDefInhrt  = _{ ("(" ~ (Ident ~ ",")* ~ ") ")? }
+
 /// MIGHT BE REMOVED
-TypeDef       =  { TypeDefKwd ~ TypeDefInhrt ~ Ident ~ Assignment ~ Literal }
-TypeArray     =  { "[]" }
-Type          =  { Ident ~ TypeArray? }
+// TypeDef   = { TypeDefKwd ~ TypeDefInhrt ~ Ident ~ Assignment ~ Literal }
+TypeArray = { "[]" }
+Type      = { Ident ~ TypeArray? }
 
 // Throw, Try, Catch
 Throw    = { "shoot " ~ Expr }

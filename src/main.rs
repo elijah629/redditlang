@@ -14,7 +14,8 @@ pub mod utils;
 struct RLParser;
 
 fn main() {
-    let pairs = RLParser::parse(Rule::Program, include_str!("test.rl"));
+    // joke idea: you compile this program setting the file path in this. therefore i dont have to make a compiler! just use rust
+    let pairs = RLParser::parse(Rule::Program, include_str!("stress_test.rl"));
     if pairs.is_err() {
         let error: pest::error::Error<Rule> = pairs.unwrap_err();
         println!("{}", format_error(error));

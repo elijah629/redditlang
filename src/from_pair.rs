@@ -1,8 +1,9 @@
-use crate::errors::error;
+use crate::errors::{error, ERR_BUG};
 use crate::parser::{
-    parse, parse_one, Assignment, BinaryExpr, BinaryExprTerm, Break, Call, Declaration, Expr,
-    Function, FunctionMod, Ident, Import, Loop, MathOperator, Module, Node, Term, Throw, TryCatch,
-    Type, Variable, VariableMod,
+    parse, parse_one, Assignment, BinaryExpr, BinaryExprTerm, Break, Call, Class,
+    ConditionExprTerm, ConditionalExpr, ConditionalOperator, Declaration, Else, ElseIf, Expr,
+    Function, FunctionMod, Ident, If, IfBlock, IfNode, Import, Loop, MathOperator, Module, Node,
+    Return, Term, Throw, Tree, TryCatch, Type, Variable, VariableMod,
 };
 use crate::utils::is_unique;
 use crate::Rule;
@@ -10,24 +11,26 @@ use pest::error::Error;
 use pest::iterators::Pair;
 
 pub trait Parse {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self;
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self>
+    where
+        Self: Sized;
 }
 
 impl Parse for Declaration {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
         let mut inner = pair.into_inner();
-        let ident = Ident::parse_from(inner.next().unwrap());
+        let ident = Ident::parse_from(inner.next().unwrap()).unwrap();
         let r#type = inner.next().map(|x| x.into_inner()).map(|mut x| Type {
-            ident: Ident::parse_from(x.next().unwrap()),
+            ident: Ident::parse_from(x.next().unwrap()).unwrap(),
             is_array: x.next().is_some(),
         });
 
-        Self { ident, r#type }
+        Some(Self { ident, r#type })
     }
 }
 
 impl Parse for Function {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
         let start_pos = pair.as_span().start_pos();
         let mut inner = pair.into_inner();
         let modifiers: Vec<FunctionMod> = inner
@@ -47,16 +50,15 @@ impl Parse for Function {
             })
             .collect();
 
-        let declaration = Declaration::parse_from(inner.next().unwrap());
+        let declaration = Declaration::parse_from(inner.next().unwrap()).unwrap();
 
         let raw_args = inner.next().unwrap();
         let start_pos = raw_args.as_span().start_pos();
         let args: Vec<Declaration> = raw_args
             .into_inner()
-            .map(|x| Declaration::parse_from(x))
+            .map(|x| Declaration::parse_from(x).unwrap())
             .collect();
 
-        // Check for duplicate argument idents
         let has_duplicates = !is_unique(args.iter().map(|x| &x.ident.0));
         if has_duplicates {
             error(Error::new_from_pos(
@@ -66,110 +68,97 @@ impl Parse for Function {
                 start_pos,
             ))
         }
-        let body = parse(inner.next().unwrap().into_inner());
-        Function {
+        let body = Tree::parse_from(inner.next().unwrap()).unwrap();
+        Some(Self {
             modifiers,
             declaration,
             args,
             body,
-        }
+        })
     }
 }
 
 impl Parse for Term {
-    fn parse_from(pair: Pair<'_, Rule>) -> Term {
-        let start_pos = pair.as_span().start_pos();
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
         match pair.as_rule() {
-            Rule::String => Term::String(enquote::unquote(pair.as_str()).unwrap().to_string()),
-            Rule::Number => Term::Number(pair.as_str().parse().unwrap()),
-            Rule::Ident => Term::Ident(Ident::parse_from(pair)),
-            _ => error(Error::new_from_pos(
-                pest::error::ErrorVariant::CustomError {
-                    message: format!("Unimplemented Term \"{:?}\"", pair.as_rule()).to_owned(),
-                },
-                start_pos,
+            Rule::String => Some(Self::String(
+                enquote::unquote(pair.as_str()).unwrap().to_string(),
             )),
+            Rule::Number => Some(Self::Number(pair.as_str().parse().unwrap())),
+            Rule::Ident => Some(Self::Ident(Ident::parse_from(pair).unwrap())),
+            _ => None,
         }
     }
 }
 
 impl Parse for Module {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
         let mut inner = pair.into_inner();
-        let ident = Ident::parse_from(inner.next().unwrap());
-        return Module { ident };
+        let ident = Ident::parse_from(inner.next().unwrap()).unwrap();
+        Some(Self { ident })
     }
 }
 
 impl Parse for Call {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
         let mut inner = pair.into_inner();
-        let ident = Ident::parse_from(inner.next().unwrap());
+        let ident = Ident::parse_from(inner.next().unwrap()).unwrap();
         let args = inner
             .next()
             .unwrap()
             .into_inner()
-            .map(|x| Term::parse_from(x.into_inner().next().unwrap()))
+            .map(|x| Term::parse_from(x.into_inner().next().unwrap()).unwrap())
             .collect();
-        Call { ident, args }
+        Some(Self { ident, args })
     }
 }
 
 impl Parse for Break {
-    fn parse_from(_pair: Pair<'_, Rule>) -> Self {
-        Break
+    fn parse_from(_pair: Pair<'_, Rule>) -> Option<Self> {
+        Some(Break)
     }
 }
 
 impl Parse for Throw {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
         let mut inner = pair.into_inner();
-        let value = Expr::parse_from(inner.next().unwrap());
-        Throw { value }
+        let value = Expr::parse_from(inner.next().unwrap()).unwrap();
+        Some(Self { value })
     }
 }
+
 impl Parse for Import {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
         let mut inner = pair.into_inner();
-        let ident = inner.next();
-        let path = Term::parse_from(ident.unwrap());
-        Import { path }
+        let path = Term::parse_from(inner.next().unwrap()).unwrap();
+        Some(Self { path })
     }
 }
 
 impl Parse for Loop {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
         let mut inner = pair.into_inner();
-        Loop {
-            body: parse(inner.next().unwrap().into_inner()),
-        }
+        Some(Self {
+            body: Tree::parse_from(inner.next().unwrap()).unwrap(),
+        })
     }
 }
 
 impl Parse for TryCatch {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
         let mut inner = pair.into_inner();
-        let mut next_tree = || {
-            parse(
-                inner
-                    .next()
-                    .unwrap()
-                    .into_inner()
-                    .next()
-                    .unwrap()
-                    .into_inner(),
-            )
-        };
+        let mut next_tree =
+            || Tree::parse_from(inner.next().unwrap().into_inner().next().unwrap()).unwrap();
 
         let r#try = next_tree();
         let r#catch = next_tree();
 
-        TryCatch { r#try, r#catch }
+        Some(Self { r#try, r#catch })
     }
 }
 
 impl Parse for Variable {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
         let start_pos = pair.as_span().start_pos();
         let mut inner = pair.into_inner();
         let modifiers: Vec<VariableMod> = inner
@@ -187,26 +176,26 @@ impl Parse for Variable {
                 )),
             })
             .collect();
-        let declaration = Declaration::parse_from(inner.next().unwrap());
-        let value = Expr::parse_from(inner.next().unwrap());
+        let declaration = Declaration::parse_from(inner.next().unwrap()).unwrap();
+        let value = Expr::parse_from(inner.next().unwrap()).unwrap();
 
-        Variable {
+        Some(Self {
             modifiers,
             declaration,
             value,
-        }
+        })
     }
 }
 
 impl Parse for BinaryExpr {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self {
-        BinaryExpr {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+        Some(Self {
             terms: pair
                 .into_inner()
                 .collect::<Vec<_>>()
                 .chunks(2)
                 .map(|x| BinaryExprTerm {
-                    operand: Term::parse_from((x[0]).clone()),
+                    operand: Term::parse_from((x[0]).clone()).unwrap(),
                     operator: x.get(1).and_then(|x| {
                         match x.clone().into_inner().next().unwrap().as_rule() {
                             Rule::Subtract => Some(MathOperator::Subtract),
@@ -218,31 +207,53 @@ impl Parse for BinaryExpr {
                     }),
                 })
                 .collect::<Vec<_>>(),
-        }
+        })
+    }
+}
+
+impl Parse for ConditionalExpr {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+        Some(Self {
+            terms: pair
+                .into_inner()
+                .collect::<Vec<_>>()
+                .chunks(2)
+                .map(|x| ConditionExprTerm {
+                    operand: Term::parse_from((x[0]).clone()).unwrap(),
+                    operator: x.get(1).and_then(|x| {
+                        match x.clone().into_inner().next().unwrap().as_rule() {
+                            Rule::Equality => Some(ConditionalOperator::Equality),
+                            Rule::AntiEquality => Some(ConditionalOperator::AntiEquality),
+                            _ => panic!("Unknown operator"),
+                        }
+                    }),
+                })
+                .collect::<Vec<_>>(),
+        })
     }
 }
 
 impl Parse for Assignment {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
         let mut inner = pair.into_inner();
-        let ident = Ident::parse_from(inner.next().unwrap());
-        let value = Expr::parse_from(inner.next().unwrap());
-        Assignment { ident, value }
+        let ident = Ident::parse_from(inner.next().unwrap()).unwrap();
+        let value = Expr::parse_from(inner.next().unwrap()).unwrap();
+        Some(Self { ident, value })
     }
 }
 
 impl Parse for Ident {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self {
-        Ident(pair.as_str().to_string())
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+        Some(Self(pair.as_str().to_string()))
     }
 }
 
 impl Parse for Expr {
-    fn parse_from(pair: Pair<'_, Rule>) -> Self {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
         let start_pos = pair.as_span().start_pos();
-        let value = parse_one(pair).unwrap();
+        let value = parse_one(pair).expect("Invalid expression");
         match value {
-            Node::Expr(x) => x,
+            Node::Expr(x) => Some(x),
             _ => error(Error::new_from_pos(
                 pest::error::ErrorVariant::CustomError {
                     message: "Value is not an expression".to_owned(),
@@ -253,4 +264,60 @@ impl Parse for Expr {
     }
 }
 
-// TODO: MORE STATEMENTS + EXPRS
+impl Parse for Tree {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+        Some(parse(pair.into_inner()))
+    }
+}
+
+impl Parse for IfBlock {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+        fn if_node(pair: Pair<'_, Rule>) -> IfNode {
+            let rule = pair.as_rule();
+            let mut inner = pair.into_inner();
+            match rule {
+                Rule::If => IfNode::If(If {
+                    expr: Expr::parse_from(inner.next().unwrap()).unwrap(),
+                    body: Tree::parse_from(inner.next().unwrap()).unwrap(),
+                }),
+                Rule::ElseIf => IfNode::ElseIf(ElseIf {
+                    expr: Expr::parse_from(inner.next().unwrap()).unwrap(),
+                    body: Tree::parse_from(inner.next().unwrap()).unwrap(),
+                }),
+                Rule::Else => IfNode::Else(Else {
+                    body: Tree::parse_from(inner.next().unwrap()).unwrap(),
+                }),
+                _ => panic!("{}", ERR_BUG),
+            }
+        }
+
+        let if_nodes: Vec<IfNode> = pair
+            .into_inner()
+            .map(|x| match x.as_rule() {
+                Rule::If | Rule::ElseIf | Rule::Else => if_node(x),
+                _ => panic!("{}", ERR_BUG),
+            })
+            .collect();
+
+        Some(Self { if_nodes })
+    }
+}
+
+impl Parse for Return {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+        let mut inner = pair.into_inner();
+        let value = Expr::parse_from(inner.next().unwrap()).unwrap();
+        Some(Self { value })
+    }
+}
+
+impl Parse for Class {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+        let mut inner = pair.into_inner();
+
+        let ident = Ident::parse_from(inner.next().unwrap()).unwrap();
+        let body = Tree::parse_from(inner.next().unwrap()).unwrap();
+
+        Some(Class { ident, body })
+    }
+}

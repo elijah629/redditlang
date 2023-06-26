@@ -88,6 +88,46 @@ pub struct Assignment {
     pub value: Expr,
 }
 
+#[derive(Debug)]
+pub struct IfBlock {
+    pub if_nodes: Vec<IfNode>,
+}
+
+#[derive(Debug)]
+pub enum IfNode {
+    If(If),
+    ElseIf(ElseIf),
+    Else(Else),
+}
+
+#[derive(Debug)]
+pub struct If {
+    pub body: Tree,
+    pub expr: Expr,
+}
+
+#[derive(Debug)]
+pub struct ElseIf {
+    pub body: Tree,
+    pub expr: Expr,
+}
+
+#[derive(Debug)]
+pub struct Else {
+    pub body: Tree,
+}
+
+#[derive(Debug)]
+pub struct Class {
+    pub ident: Ident,
+    pub body: Tree,
+}
+
+#[derive(Debug)]
+pub struct Return {
+    pub value: Expr,
+}
+
 // Operators
 #[derive(Debug)]
 pub enum MathOperator {
@@ -98,18 +138,30 @@ pub enum MathOperator {
     XOR,
 }
 
+#[derive(Debug)]
+pub enum ConditionalOperator {
+    Equality,
+    AntiEquality,
+}
+
 // Expressions
 
+pub type BinaryExpr = ChainedExpr<MathOperator>;
+pub type BinaryExprTerm = ChainedExprTerm<MathOperator>;
+
+pub type ConditionalExpr = ChainedExpr<ConditionalOperator>;
+pub type ConditionExprTerm = ChainedExprTerm<ConditionalOperator>;
+
 #[derive(Debug)]
-pub struct BinaryExpr {
-    pub terms: Vec<BinaryExprTerm>,
+pub struct ChainedExpr<T> {
+    pub terms: Vec<ChainedExprTerm<T>>,
 }
 
 #[derive(Debug)]
-pub struct BinaryExprTerm {
+pub struct ChainedExprTerm<T> {
     pub operand: Term,
     /// None on the last term
-    pub operator: Option<MathOperator>,
+    pub operator: Option<T>,
 }
 
 #[derive(Debug)]
@@ -118,7 +170,8 @@ pub struct Ident(pub String);
 #[derive(Debug)]
 pub enum Expr {
     BinaryExpr(BinaryExpr),
-    Ident(Ident),
+    ConditionalExpr(ConditionalExpr),
+    Term(Term),
     Null,
 }
 
@@ -135,6 +188,9 @@ pub enum Node {
     TryCatch(TryCatch),
     Variable(Variable),
     Assignment(Assignment),
+    If(IfBlock),
+    Class(Class),
+    Return(Return),
     Expr(Expr),
 }
 
@@ -145,34 +201,37 @@ pub fn parse_one(pair: pest::iterators::Pair<'_, Rule>) -> Option<Node> {
         Rule::Statement => {
             let statement = pair.into_inner().next().unwrap();
             match statement.as_rule() {
-                Rule::Loop => Some(Node::Loop(Loop::parse_from(statement))),
-                Rule::Function => Some(Node::Function(Function::parse_from(statement))),
-                Rule::Call => Some(Node::Call(Call::parse_from(statement))),
-                Rule::Break => Some(Node::Break(Break::parse_from(statement))),
-                Rule::Throw => Some(Node::Throw(Throw::parse_from(statement))),
-                Rule::Import => Some(Node::Import(Import::parse_from(statement))),
-                Rule::Module => Some(Node::Module(Module::parse_from(statement))),
-                Rule::TryCatch => Some(Node::TryCatch(TryCatch::parse_from(statement))),
-                Rule::Variable => Some(Node::Variable(Variable::parse_from(statement))),
+                Rule::Loop => Some(Node::Loop(Loop::parse_from(statement).unwrap())),
+                Rule::Function => Some(Node::Function(Function::parse_from(statement).unwrap())),
+                Rule::Call => Some(Node::Call(Call::parse_from(statement).unwrap())),
+                Rule::Break => Some(Node::Break(Break::parse_from(statement).unwrap())),
+                Rule::Throw => Some(Node::Throw(Throw::parse_from(statement).unwrap())),
+                Rule::Import => Some(Node::Import(Import::parse_from(statement).unwrap())),
+                Rule::Module => Some(Node::Module(Module::parse_from(statement).unwrap())),
+                Rule::TryCatch => Some(Node::TryCatch(TryCatch::parse_from(statement).unwrap())),
+                Rule::Variable => Some(Node::Variable(Variable::parse_from(statement).unwrap())),
                 Rule::AssignmentStatement => {
-                    Some(Node::Assignment(Assignment::parse_from(statement)))
+                    Some(Node::Assignment(Assignment::parse_from(statement).unwrap()))
                 }
+                Rule::IfBlock => Some(Node::If(IfBlock::parse_from(statement).unwrap())),
+                Rule::Class => Some(Node::Class(Class::parse_from(statement).unwrap())),
+                Rule::Return => Some(Node::Return(Return::parse_from(statement).unwrap())),
                 _ => None,
             }
         }
         Rule::Expr => {
             let expression = pair.into_inner().next().unwrap();
             match expression.as_rule() {
-                // Mathematical expression
-                Rule::BinaryExpr => Some(Node::Expr(Expr::BinaryExpr(BinaryExpr::parse_from(
-                    expression,
-                )))),
-                Rule::Ident => Some(Node::Expr(Expr::Ident(Ident::parse_from(expression)))),
+                Rule::BinaryExpr => Some(Node::Expr(Expr::BinaryExpr(
+                    BinaryExpr::parse_from(expression).unwrap(),
+                ))),
+                Rule::ConditionalExpr => Some(Node::Expr(Expr::ConditionalExpr(
+                    ConditionalExpr::parse_from(expression).unwrap(),
+                ))),
                 Rule::Null => Some(Node::Expr(Expr::Null)),
-                _ => None,
+                _ => Term::parse_from(expression).map(|x| Node::Expr(Expr::Term(x))),
             }
         }
-
         _ => None,
     }
 }

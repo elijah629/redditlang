@@ -223,8 +223,8 @@ Fields are placed at the top of the class, they are by default private.
 
 ```r
 specimin(Enum) Boolean =
-Yup   | // True
-Nope    // False
+Yup   | # True
+Nope    # False
 ```
 
 ### Foolean
@@ -233,11 +233,11 @@ Nope    // False
 
 ```r
 specimin(Flags) Foolean =
-Yup   | // True
-Nope  | // False
-IDK   | // Null
-Huh   | // IO Failure
-Yeet    // Random Foolean
+Yup   | # True
+Nope  | # False
+IDK   | # Null
+Huh   | # IO Failure
+Yeet    # Random Foolean
 ```
 
 ### Flag
@@ -246,9 +246,9 @@ Yeet    // Random Foolean
 
 ```r
 specimin(Flag) OldProductTypes ∑ Type1 | Type2 | Type3
-specimin(Flag) CurrentProductTypes ∑ OldProductTypes | Type4 // Add
-specimin(Flag) SupportedTypes ∑ CurrentProductTypes - Type3 // Subtract
-specimin(Flag) NonSupportedTypes ∑ CurrentProductTypes - SupportedTypes // Diff
+specimin(Flag) CurrentProductTypes ∑ OldProductTypes | Type4 # Add
+specimin(Flag) SupportedTypes ∑ CurrentProductTypes - Type3 # Subtract
+specimin(Flag) NonSupportedTypes ∑ CurrentProductTypes - SupportedTypes # Diff
 ```
 
 ### String
