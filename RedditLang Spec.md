@@ -177,14 +177,8 @@ A term is an identifier, number, string, or `(<EXPRESSION>)`
 
 ## Typing
 
-- New types are marked with `specimin <NAME>`
-- Type aliases with inheritance are marked with `specimin(<INHERITING TYPES>) <NAME>`
 - Typing a variable or function return type is optional.
 - Types that are an `Array` have a `[]` after it
-
-```r
-specimin(Flags) Week = Mon | Tue | Wed | Thu | Fri | Sat | Sun
-```
 
 ```r
 <TYPE>[]
@@ -222,7 +216,6 @@ Fields are placed at the top of the class, they are by default private.
 - This is a `Yes or No` question
 
 ```r
-specimin(Enum) Boolean =
 Yup   | # True
 Nope    # False
 ```
@@ -232,7 +225,6 @@ Nope    # False
 - Boolean type but very foolish
 
 ```r
-specimin(Flags) Foolean =
 Yup   | # True
 Nope  | # False
 IDK   | # Null
@@ -240,7 +232,7 @@ Huh   | # IO Failure
 Yeet    # Random Foolean
 ```
 
-### Flag
+<!-- removing typedefs ### Flag
 
 - Flags can be subtracted, added or taken the difference of. These are like the `bitflags` crate in rust ( technically could be implemented with this ).
 
@@ -249,7 +241,7 @@ specimin(Flag) OldProductTypes ∑ Type1 | Type2 | Type3
 specimin(Flag) CurrentProductTypes ∑ OldProductTypes | Type4 # Add
 specimin(Flag) SupportedTypes ∑ CurrentProductTypes - Type3 # Subtract
 specimin(Flag) NonSupportedTypes ∑ CurrentProductTypes - SupportedTypes # Diff
-```
+``` -->
 
 ### String
 
