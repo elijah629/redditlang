@@ -1,8 +1,10 @@
 use crate::{from_pair::Parse, Rule};
 
+type Number = i128; // Number type
+
 #[derive(Debug)]
 pub enum Term {
-    Number(i64),
+    Number(Number),
     String(String),
     Ident(Ident),
 }
@@ -146,11 +148,23 @@ pub enum ConditionalOperator {
 
 // Expressions
 
+pub type ConditionalExpr = ChainedExpr<ConditionalOperator>;
+pub type ConditionExprTerm = ChainedExprTerm<ConditionalOperator>;
+
 pub type BinaryExpr = ChainedExpr<MathOperator>;
 pub type BinaryExprTerm = ChainedExprTerm<MathOperator>;
 
-pub type ConditionalExpr = ChainedExpr<ConditionalOperator>;
-pub type ConditionExprTerm = ChainedExprTerm<ConditionalOperator>;
+#[derive(Debug)]
+pub struct IndexExpr {
+    pub term: Term,
+    pub index: Index,
+}
+
+#[derive(Debug)]
+pub enum Index {
+    Number(Number),
+    String(String),
+}
 
 #[derive(Debug)]
 pub struct ChainedExpr<T> {
@@ -171,6 +185,7 @@ pub struct Ident(pub String);
 pub enum Expr {
     BinaryExpr(BinaryExpr),
     ConditionalExpr(ConditionalExpr),
+    IndexExpr(IndexExpr),
     Term(Term),
     Null,
 }
@@ -227,6 +242,9 @@ pub fn parse_one(pair: pest::iterators::Pair<'_, Rule>) -> Option<Node> {
                 ))),
                 Rule::ConditionalExpr => Some(Node::Expr(Expr::ConditionalExpr(
                     ConditionalExpr::parse_from(expression).unwrap(),
+                ))),
+                Rule::IndexExpr => Some(Node::Expr(Expr::IndexExpr(
+                    IndexExpr::parse_from(expression).unwrap(),
                 ))),
                 Rule::Null => Some(Node::Expr(Expr::Null)),
                 _ => Term::parse_from(expression).map(|x| Node::Expr(Expr::Term(x))),

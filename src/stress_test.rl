@@ -1,4 +1,4 @@
-#*repeatdatshid {
+repeatdatshid {
 
 }
 
@@ -29,8 +29,10 @@ is value ⅀ 69 {
 } isnt {
 
 }
-*#
+
 school Lab {
+    bar meth prop damn Number ∑ wat
+
     callmeonmycellphone snoRt() {
         # Destructor
     }
@@ -41,3 +43,7 @@ school Lab {
 }
 
 spez 80085
+
+bar meth name damn a ∑ a[1]
+# dswswsqw
+damn s 

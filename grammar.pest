@@ -17,7 +17,8 @@ Statement  =  {
   | Throw
   | Import
   | Module
-  | Variable // REMOVAL: Will be removed. Classes should be used. just add an enum keyword
+  | Variable
+  // REMOVAL: Will be removed. Classes should be used. just add an enum keyword
   // | TypeDef
 
   | AssignmentStatement
@@ -61,15 +62,15 @@ CallArgs =  { "(" ~ CallArg* ~ ")" }
 // Exprs
 ConditionalExpr =  { Term ~ (ConditionalOperator ~ Term)+ }
 BinaryExpr      =  { Term ~ (MathOperator ~ Term)+ }
-IndexingExpr    =  { Term ~ "[" ~ (UInt | Ident) ~ "]" }
+IndexExpr    =  { Term ~ "[" ~ (Number | String) ~ "]" }
 Expr            =  {
     ConditionalExpr
   | BinaryExpr
-  | IndexingExpr
+  | IndexExpr
   | Term
 }
 Literal         = _{ Number | String | Foolean | Boolean | Null }
-Term            = _{ Literal | Ident | "(" ~ Expr ~ ")" }
+Term            = _{ Literal | Call | Ident | "(" ~ Expr ~ ")" }
 
 // Types
 TypedIdentKwd = _{ "damn " }

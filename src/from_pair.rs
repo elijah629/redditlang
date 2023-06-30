@@ -2,8 +2,8 @@ use crate::errors::{error, ERR_BUG};
 use crate::parser::{
     parse, parse_one, Assignment, BinaryExpr, BinaryExprTerm, Break, Call, Class,
     ConditionExprTerm, ConditionalExpr, ConditionalOperator, Declaration, Else, ElseIf, Expr,
-    Function, FunctionMod, Ident, If, IfBlock, IfNode, Import, Loop, MathOperator, Module, Node,
-    Return, Term, Throw, Tree, TryCatch, Type, Variable, VariableMod,
+    Function, FunctionMod, Ident, If, IfBlock, IfNode, Import, Index, IndexExpr, Loop,
+    MathOperator, Module, Node, Return, Term, Throw, Tree, TryCatch, Type, Variable, VariableMod,
 };
 use crate::utils::is_unique;
 use crate::Rule;
@@ -318,6 +318,21 @@ impl Parse for Class {
         let ident = Ident::parse_from(inner.next().unwrap()).unwrap();
         let body = Tree::parse_from(inner.next().unwrap()).unwrap();
 
-        Some(Class { ident, body })
+        Some(Self { ident, body })
+    }
+}
+
+impl Parse for IndexExpr {
+    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+        let mut inner = pair.into_inner();
+
+        let term = Term::parse_from(inner.next().unwrap()).unwrap();
+        let index = Term::parse_from(inner.next().unwrap()).unwrap();
+        let index = match index {
+            Term::Number(x) => Index::Number(x),
+            Term::String(x) => Index::String(x),
+            _ => panic!("{:?}", ERR_BUG),
+        };
+        Some(Self { term, index })
     }
 }

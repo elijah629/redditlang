@@ -37,7 +37,7 @@ pub fn format_error(error: pest::error::Error<Rule>) -> String {
 }
 
 pub fn error(error: pest::error::Error<Rule>) -> ! {
-    println!("{}", format_error(error));
+    eprintln!("{}", format_error(error));
     std::process::exit(1);
 }
 
