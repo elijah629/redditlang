@@ -2,7 +2,7 @@
 
 <img src="redditLang.png" height="100"/>
 
-**PHL** ( ProgrammerHumor language ) or **RedditLang** is a language created by the r/ProgrammerHumor discord!
+redditLang or PHL ( **P**rogramming **H**umor **L**anguage ) is a meme language devised by the r/ProgrammerHumor subreddit discord members
 
 The spec is avaliable [here](./RedditLang%20Spec.md)
 
@@ -19,4 +19,4 @@ _[Check out the VS Code support development here](https://github.com/Roizor/redd
 
 \*_Compiler\*\* is WIP, if you are looking for it. It will be here_  
 \*\*_It may be Interpreted or JIT, but that is implementation specific_
-**note**: We at redditlang realize that we have a younger audience, so we have started translating the spec into Gen Z Slang "to make it bussin" [here](./RedditLang%20Spec%20GenZ.md)
+**note**: We have realized that we have a younger audience, so we have translated the spec into Gen Z Slang "to make it bussin" [here](./RedditLang%20Spec%20GenZ.md)
