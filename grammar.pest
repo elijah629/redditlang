@@ -34,7 +34,7 @@ Break   =  { "sthu" }
 
 // Functions
 FunctionKwd  = _{ "callmeonmycellphone " }
-Function     =  { FunctionMods ~ FunctionKwd ~ Declaration ~ FunctionArgs? ~ Block }
+Function     =  { FunctionMods ~ FunctionKwd ~ Declaration ~ FunctionArgs ~ Block }
 FunctionMod  =  { "debug " | AccessibilityModifier }
 FunctionMods =  { FunctionMod* }
 FunctionArg  = _{ Declaration ~ "," }

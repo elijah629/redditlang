@@ -9,7 +9,7 @@ repeatdatshid {
 
 sthu
 
-debug bar callmeonmycellphone split damn [](x damn String, splitter damn String,) {
+debug bar callmeonmycellphone split damn String[](x damn String, splitter damn String,) {
    
 }
 
