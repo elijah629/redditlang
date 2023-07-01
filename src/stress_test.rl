@@ -1,25 +1,27 @@
+subreddit r/ProgammerHumor
+
+weneed "meth.rl"
+bringme "memes.rl"
+
 repeatdatshid {
 
 }
 
 sthu
 
-debug bar callmeonmycellphone split damn String[](x damn String, splitter damn String,) {
+debug bar callmeonmycellphone split damn [](x damn String, splitter damn String,) {
    
 }
 
 call coitusinterruptus("Hello, World",)
-
+ 
 test {} wall {}
 
-shoot dang
+shoot dang 
 
-weneed "meth"
+bar meth value damn Number ∑ wat
 
-subreddit r/ProgammerHumor
-
-bar meth value damn Number ∑ 70
-
+value ∑ 70
 value ∑ value - 1
 
 is value ⅀ 69 {
@@ -33,17 +35,19 @@ is value ⅀ 69 {
 school Lab {
     bar meth prop damn Number ∑ wat
 
-    callmeonmycellphone snoRt() {
-        # Destructor
-    }
-
     callmeonmycellphone cooK() {
         # Constructor
+    }
+
+    callmeonmycellphone snoRt() {
+        # Destructor
     }
 }
 
 spez 80085
 
 bar meth name damn a ∑ a[1]
-# dswswsqw
-damn s 
+
+#*
+Multiline also works
+*#

@@ -1,6 +1,9 @@
 # RedditLang
 
-<img src="redditLang.png" height="100"/>
+<picture>
+  <source srcset="./assets/redditLang-full-dark.png" media="(prefers-color-scheme: dark)" width="450"/>
+  <img src="./assets/redditLang-full-light.png" width="450"/>
+</picture>
 
 redditLang or PHL ( **P**rogramming **H**umor **L**anguage ) is a meme language devised by the r/ProgrammerHumor subreddit discord members
 

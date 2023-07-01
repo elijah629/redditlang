@@ -41,7 +41,7 @@ repeatdatshid { # Opens a loop
 
 ## Blocks
 
-- Blocks are created with squirly brackets
+- Blocks are created with curly braces
 
 ```r
 { # This is a block
@@ -268,9 +268,9 @@ A number can store any value.
 <UNARY_OPERATOR><VALUE>
 ```
 
-### Wat
+### Null
 
-- This is `null`
+- This is `wat`
 
 ### Arrays
 
