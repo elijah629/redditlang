@@ -35,7 +35,7 @@ is value ⅀ 69 {
 school Lab {
     bar meth prop damn Number ∑ wat
 
-    callmeonmycellphone cooK(x) {
+    callmeonmycellphone cooK() {
         # Constructor
     }
 
