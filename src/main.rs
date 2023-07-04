@@ -2,11 +2,16 @@ use crate::{
     errors::error,
     llvm::{llvm, Compiler},
 };
-use inkwell::{context::Context, passes::PassManager, AddressSpace};
+use inkwell::{
+    context::Context,
+    passes::PassManager,
+    targets::{CodeModel, InitializationConfig, RelocMode, Target, TargetMachine, TargetTriple},
+    AddressSpace, OptimizationLevel,
+};
 use parser::{parse, Tree};
 use pest::Parser;
 use pest_derive::Parser;
-use std::{hash::Hash, path::Path, process::Command};
+use std::{hash::Hash, path::Path};
 
 pub mod errors;
 pub mod from_pair;
@@ -41,14 +46,9 @@ fn main() {
 
     fpm.initialize();
 
-    // let execution_engine = module
-    //     .create_jit_execution_engine(OptimizationLevel::None)
-    //     .expect("failed to create ExecutionEngine");
-
     let compiler = &Compiler {
         context: &context,
         module,
-        // execution_engine,
         builder,
         fpm,
     };
@@ -64,15 +64,7 @@ fn main() {
     compiler.module.add_function("puts", putchar_type, None);
 
     let main_type = compiler.context.void_type().fn_type(&[], false);
-    let main_fn = compiler.module.add_function("_start", main_type, None);
-
-    // let test_fn_name = CString::new("test_fn").unwrap();
-    // unsafe {
-    //     LLVMAddSymbol(test_fn_name.as_ptr(), test_fn as *mut c_void);
-    // }
-
-    // let fn_type = compiler.context.void_type().fn_type(&[], false);
-    // let fn_val = compiler.module.add_function("test_fn", fn_type, None);
+    let main_fn = compiler.module.add_function("main", main_type, None);
 
     let entry_basic_block = compiler.context.append_basic_block(main_fn, "entry");
     compiler.builder.position_at_end(entry_basic_block);
@@ -81,22 +73,11 @@ fn main() {
 
     compiler.builder.build_return(None);
 
-    // let void_type = context.void_type();
-    // let fn_type = void_type.fn_type(&[], false);
-
-    // compiler.module.add_function("my_fn", fn_type, None);
-
     println!(
         "LLVM RL\n{}\n",
         &compiler.module.print_to_string().to_string()
     );
-    // unsafe {
-    //     compiler
-    //         .execution_engine
-    //         .get_function::<unsafe extern "C" fn()>("test_fn")
-    //         .unwrap()
-    //         .call();
-    // }
+
     let verified = compiler.module.verify();
     if verified.is_err() {
         eprintln!(
@@ -106,13 +87,29 @@ fn main() {
         std::process::exit(1);
     }
 
-    let path = Path::new("module.bc");
-    compiler.module.write_bitcode_to_path(&path);
+    Target::initialize_x86(&InitializationConfig::default());
 
-    Command::new("llc")
-        .arg(path)
-        .spawn()
-        .expect("Failed to compile to ASM");
+    let opt = OptimizationLevel::Aggressive;
+    let reloc = RelocMode::Default;
+    let model = CodeModel::Default;
+
+    let path = Path::new("module.o");
+
+    let target = Target::from_name("x86-64").unwrap();
+    let target_machine = target
+        .create_target_machine(
+            &TargetMachine::get_default_triple(),
+            "x86-64",
+            "+avx2",
+            opt,
+            reloc,
+            model,
+        )
+        .unwrap();
+
+    target_machine
+        .write_to_file(&compiler.module, inkwell::targets::FileType::Object, path)
+        .unwrap();
 }
 
 fn parse_file(file: &str) -> Tree {
