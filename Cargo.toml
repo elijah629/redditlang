@@ -8,5 +8,7 @@ edition = "2021"
 [dependencies]
 colorize = "0.1.0"
 enquote = "1.1.0"
+inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "master", features = ["llvm15-0"] }
+llvm-sys = "150.0.7"
 pest = "2.6.1"
 pest_derive = "2.6.1"

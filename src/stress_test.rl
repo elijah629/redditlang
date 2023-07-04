@@ -1,6 +1,7 @@
 subreddit r/ProgammerHumor
 
-weneed "meth.rl"
+# These statements have identical meanings
+weneed "ProgrammerHumor"
 bringme "memes.rl"
 
 repeatdatshid {
@@ -35,7 +36,7 @@ is value ⅀ 69 {
 school Lab {
     bar meth prop damn Number ∑ wat
 
-    callmeonmycellphone cooK(x) {
+    callmeonmycellphone cooK() {
         # Constructor
     }
 

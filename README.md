@@ -23,3 +23,12 @@ _[Check out the Official VSCode extension here](https://github.com/elijah629/red
 \*_Compiler\*\* is WIP, if you are looking for it. It will be here_  
 \*\*_It may be Interpreted or JIT, but that is implementation specific_
 **note**: We have realized that we have a younger audience, so we have translated the spec into Gen Z Slang "to make it bussin" [here](./RedditLang%20Spec%20GenZ.md)
+
+## Requirements
+
+LLVM 15.0.x
+
+### Note
+
+For some ubuntu users you might get an error about `Polly` not being found. Install it with `sudo apt install libpolly-15-dev`
+See [this](https://gitlab.com/taricorp/llvm-sys.rs/-/issues/13) for more information
