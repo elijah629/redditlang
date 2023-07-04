@@ -27,6 +27,8 @@ _[Check out the Official VSCode extension here](https://github.com/elijah629/red
 ## Requirements
 
 LLVM 15.0.x
+GCC or Clang
+A system-wide linker
 
 ### Note
 

@@ -1,6 +1,10 @@
-use crate::parser::{Node, Tree};
+use crate::parser::{Node, Term, Tree};
 use inkwell::{
-    builder::Builder, context::Context, module::Module, passes::PassManager, values::FunctionValue,
+    builder::Builder,
+    context::Context,
+    module::Module,
+    passes::PassManager,
+    values::{BasicMetadataValueEnum, FunctionValue},
 };
 
 pub struct Compiler<'ctx> {
@@ -8,7 +12,6 @@ pub struct Compiler<'ctx> {
     pub builder: Builder<'ctx>,
     pub fpm: PassManager<FunctionValue<'ctx>>,
     pub module: Module<'ctx>,
-    // pub execution_engine: ExecutionEngine<'ctx>,
 }
 
 pub fn llvm<'ctx>(compiler: &Compiler, tree: &Tree) {
@@ -31,12 +34,23 @@ pub fn llvm_one(compiler: &Compiler, node: &Node) {
             if function.is_null() || function.is_undef() {
                 panic!("Function `{}` is null or undefined", call.ident.0);
             }
-            let ptr = compiler
-                .builder
-                .build_global_string_ptr("Hello, World!", ".str");
+            let args: Vec<BasicMetadataValueEnum> = call
+                .args
+                .iter()
+                .map(|x| match x {
+                    Term::Number(_) => todo!(),
+                    Term::String(x) => compiler
+                        .builder
+                        .build_global_string_ptr(x, ".str")
+                        .as_pointer_value()
+                        .into(),
+                    Term::Ident(_) => todo!(),
+                })
+                .collect();
+
             compiler
                 .builder
-                .build_call(function, &[ptr.as_pointer_value().into()], "call");
+                .build_call(function, args.as_slice(), "call");
         }
         Node::Throw(_) => todo!(),
         Node::Import(_) => todo!(),

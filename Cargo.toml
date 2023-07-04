@@ -3,7 +3,8 @@ name = "redditlang"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+members = ["std"]
 
 [dependencies]
 colorize = "0.1.0"
@@ -12,3 +13,9 @@ inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "master", feat
 llvm-sys = "150.0.7"
 pest = "2.6.1"
 pest_derive = "2.6.1"
+
+# This cuts walter from 40MB to 20MB and libstd from 3MB to 14KB
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

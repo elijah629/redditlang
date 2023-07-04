@@ -5,7 +5,7 @@ use crate::{
 use inkwell::{
     context::Context,
     passes::PassManager,
-    targets::{CodeModel, InitializationConfig, RelocMode, Target, TargetMachine, TargetTriple},
+    targets::{CodeModel, InitializationConfig, RelocMode, Target, TargetMachine},
     AddressSpace, OptimizationLevel,
 };
 use parser::{parse, Tree};
