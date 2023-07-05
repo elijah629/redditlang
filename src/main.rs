@@ -53,7 +53,9 @@ fn main() {
         fpm,
     };
 
-    let putchar_type = compiler.context.i32_type().fn_type(
+    // Add libstd functions
+
+    let println_type = compiler.context.void_type().fn_type(
         &[compiler
             .context
             .i8_type()
@@ -61,9 +63,11 @@ fn main() {
             .into()],
         false,
     );
-    compiler.module.add_function("puts", putchar_type, None);
+    compiler
+        .module
+        .add_function("coitusinterruptus", println_type, None);
 
-    let main_type = compiler.context.void_type().fn_type(&[], false);
+    let main_type = compiler.context.i32_type().fn_type(&[], false);
     let main_fn = compiler.module.add_function("main", main_type, None);
 
     let entry_basic_block = compiler.context.append_basic_block(main_fn, "entry");
@@ -71,7 +75,9 @@ fn main() {
 
     llvm(&compiler, &tree);
 
-    compiler.builder.build_return(None);
+    compiler
+        .builder
+        .build_return(Some(&compiler.context.i32_type().const_zero()));
 
     println!(
         "LLVM RL\n{}\n",
@@ -90,7 +96,7 @@ fn main() {
     Target::initialize_x86(&InitializationConfig::default());
 
     let opt = OptimizationLevel::Aggressive;
-    let reloc = RelocMode::Default;
+    let reloc = RelocMode::PIC;
     let model = CodeModel::Default;
 
     let path = Path::new("module.o");

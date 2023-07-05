@@ -313,11 +313,23 @@ The standard library is imported by default. No need to add it manually. If you 
 
 - io
 - time
+- sys
 
 ### IO Functions
 
-- `coitusinterruptus` standard print function Signature `call coitusinterruptus(text damn String)`
-- `pulloutnt` standard readline function Signature `call String pulloutnt()` Reads a line from stdio and returns it with no newline at the end
+- `coitusinterruptus`
+  standard print function
+  Signature `coitusinterruptus(text damn String)`
+- `pulloutnt`
+  standard readline function
+  Signature `String pulloutnt()`
+  Reads a line from stdin and returns it with no newline at the end
+
+### Sys functions
+
+- `exit`
+  standard exit function
+  Signature: `(code damn Number)`
 
 ### Time Functions
 

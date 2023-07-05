@@ -14,7 +14,6 @@ llvm-sys = "150.0.7"
 pest = "2.6.1"
 pest_derive = "2.6.1"
 
-# This cuts walter from 40MB to 20MB and libstd from 3MB to 14KB
 [profile.release]
 lto = true
 codegen-units = 1

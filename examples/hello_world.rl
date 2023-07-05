@@ -1,2 +1,1 @@
-# call coitusinterruptus("Hello, World",)
-call puts("Hello, World",)
+call coitusinterruptus("Hello, World",)
