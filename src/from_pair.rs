@@ -1,9 +1,10 @@
 use crate::errors::{error, ERR_BUG};
 use crate::parser::{
-    parse, parse_one, Assignment, BinaryExpr, BinaryExprTerm, Break, Call, Class,
+    parse, parse_one, Assignment, BinaryExpr, BinaryExprTerm, Break, Call, Catch, Class,
     ConditionExprTerm, ConditionalExpr, ConditionalOperator, Declaration, Else, ElseIf, Expr,
     Function, FunctionMod, Ident, If, IfBlock, IfNode, Import, Index, IndexExpr, Loop,
-    MathOperator, Module, Node, Return, Term, Throw, Tree, TryCatch, Type, Variable, VariableMod,
+    MathOperator, Module, Node, Return, Term, Throw, Tree, Try, TryCatch, Type, Variable,
+    VariableMod,
 };
 use crate::utils::is_unique;
 use crate::Rule;
@@ -147,13 +148,24 @@ impl Parse for Loop {
 impl Parse for TryCatch {
     fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
         let mut inner = pair.into_inner();
-        let mut next_tree =
-            || Tree::parse_from(inner.next().unwrap().into_inner().next().unwrap()).unwrap();
 
-        let r#try = next_tree();
-        let r#catch = next_tree();
+        let r#try = Try(Tree::parse_from(inner.next().unwrap()).unwrap());
+        let mut catch = inner.next().unwrap().into_inner();
 
-        Some(Self { r#try, r#catch })
+        let first = catch.next().unwrap();
+        let catch = match first.as_rule() {
+            Rule::Block => Catch(None, Tree::parse_from(first).unwrap()),
+            Rule::Ident => Catch(
+                Ident::parse_from(first),
+                Tree::parse_from(catch.next().unwrap()).unwrap(),
+            ),
+            _ => panic!(
+                "{} Additional Information: NOT_CATCH_OR_IDENT({:?})",
+                ERR_BUG,
+                first.as_rule()
+            ),
+        };
+        Some(TryCatch { r#try, catch })
     }
 }
 

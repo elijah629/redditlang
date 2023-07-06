@@ -68,9 +68,14 @@ pub struct Module {
 
 #[derive(Debug)]
 pub struct TryCatch {
-    pub r#try: Tree,
-    pub r#catch: Tree,
+    pub r#try: Try,
+    pub catch: Catch,
 }
+
+#[derive(Debug)]
+pub struct Try(pub Tree);
+#[derive(Debug)]
+pub struct Catch(pub Option<Ident>, pub Tree);
 
 #[derive(Debug)]
 pub struct Variable {

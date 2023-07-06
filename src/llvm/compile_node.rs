@@ -10,14 +10,15 @@ pub trait Compile {
 
 impl Compile for Call {
     fn compile(&self, compiler: &Compiler) {
-        let function = compiler.module.get_function(self.ident.0.as_str());
-        if function.is_none() {
-            panic!("Function `{}` not defined", self.ident.0);
-        }
-        let function = function.unwrap();
+        let function = match compiler.module.get_function(self.ident.0.as_str()) {
+            Some(x) => x,
+            None => panic!("Function `{}` not defined", self.ident.0),
+        };
+
         if function.is_null() || function.is_undef() {
             panic!("Function `{}` is null or undefined", self.ident.0);
         }
+
         let args: Vec<BasicMetadataValueEnum> = self
             .args
             .iter()

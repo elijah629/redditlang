@@ -1,18 +1,22 @@
 [package]
-name = "redditlang"
+name = "walter"
 version = "0.1.0"
 edition = "2021"
 
-[workspace]
-members = ["std"]
-
 [dependencies]
-colorize = "0.1.0"
+cc = "1.0.79"
+clap = { version = "4.3.10", features = ["derive"] }
+colored = "2.0.4"
+dirs = "5.0.1"
 enquote = "1.1.0"
+git2 = "0.17.2"
 inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "master", features = ["llvm15-0"] }
 llvm-sys = "150.0.7"
+log = "0.4.19"
 pest = "2.6.1"
 pest_derive = "2.6.1"
+serde = { version = "1.0.166", features = ["derive"] }
+serde_yaml = "0.9.22"
 
 [profile.release]
 lto = true
