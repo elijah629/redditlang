@@ -1,4 +1,4 @@
-use colorize::AnsiColor;
+use colored::Colorize;
 use pest::error::LineColLocation;
 
 use crate::Rule;

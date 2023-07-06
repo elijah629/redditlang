@@ -62,7 +62,7 @@ CallArgs =  { "(" ~ CallArg* ~ ")" }
 // Exprs
 ConditionalExpr =  { Term ~ (ConditionalOperator ~ Term)+ }
 BinaryExpr      =  { Term ~ (MathOperator ~ Term)+ }
-IndexExpr    =  { Term ~ "[" ~ (Number | String) ~ "]" }
+IndexExpr       =  { Term ~ "[" ~ (Number | String) ~ "]" }
 Expr            =  {
     ConditionalExpr
   | BinaryExpr
@@ -85,7 +85,7 @@ Type      = { Ident ~ TypeArray? }
 
 // Throw, Try, Catch
 Throw    = { "shoot " ~ Expr }
-Catch    = { "wall" ~ Block }
+Catch    = { "wall" ~ Ident? ~ Block }
 Try      = { "test" ~ Block }
 TryCatch = { Try ~ Catch }
 
