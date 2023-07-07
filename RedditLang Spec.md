@@ -4,6 +4,30 @@ This is a high level overview of redditlang’s syntax and features. It is organ
 
 The official PEG grammar file `grammar.pest` should be included with this document.
 
+## Contents
+
+- [RedditLang 2023.0.1.7](#redditlang-2023017)
+  - [Contents](#contents)
+  - [Document Conventions](#document-conventions)
+  - [Blocks](#blocks)
+  - [Statements](#statements)
+  - [Identifier Policy](#identifier-policy)
+  - [Variables](#variables)
+  - [Typing](#typing)
+  - [Loops](#loops)
+  - [Branching](#branching)
+  - [Expressions](#expressions)
+  - [Functions](#functions)
+  - [Errors](#errors)
+  - [Comments](#comments)
+  - [Primitive types](#primitive-types)
+  - [Operators](#operators)
+  - [Classes](#classes)
+  - [Modules](#modules)
+  - [Build system](#build-system)
+    - [Walter](#walter)
+  - [Standard library](#standard-library)
+
 ## Document Conventions
 
 These are common syntaxes used in this document that refer to parts of the parser.
