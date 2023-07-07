@@ -1,14 +1,13 @@
 use crate::{
     errors::error,
-    llvm::{llvm, Compiler},
+    llvm::{compile, Compiler},
 };
 use clap::{Parser, Subcommand};
 use colored::Colorize;
 use git::clone_else_pull;
 use inkwell::{
     context::Context,
-    passes::PassManager,
-    targets::{CodeModel, InitializationConfig, RelocMode, Target, TargetMachine},
+    targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine},
     AddressSpace, OptimizationLevel,
 };
 use parser::{parse, Tree};
@@ -49,7 +48,13 @@ enum Commands {
         /// Enables release mode, longer build but more optimizations.
         #[arg(short, long)]
         release: bool,
+
+        /// Compiles LLVM to assembly, instead of object, before linking
+        #[arg(short, long)]
+        assembly: bool,
     },
+    /// Removes build dir
+    Clean,
     // /// Builds and runs a program
     // Brwww {
     //     /// Enables release mode, longer build but more optimizations.
@@ -108,7 +113,7 @@ fn main() {
     logger::init().unwrap();
 
     match args.command {
-        Commands::Cook { release } => {
+        Commands::Cook { release, assembly } => {
             let project = get_project();
             let std_path = match build_libstd() {
                 Ok(x) => x,
@@ -137,25 +142,25 @@ fn main() {
             let module = context.create_module("main");
             let builder = context.create_builder();
 
-            let fpm = PassManager::create(&module);
+            // let fpm = PassManager::create(&module);
 
-            // TODO: Add more passes for better optimization
-            fpm.add_instruction_combining_pass();
-            fpm.add_reassociate_pass();
-            fpm.add_gvn_pass();
-            fpm.add_cfg_simplification_pass();
-            fpm.add_basic_alias_analysis_pass();
-            fpm.add_promote_memory_to_register_pass();
-            fpm.add_instruction_combining_pass();
-            fpm.add_reassociate_pass();
+            // // TODO: Add more passes for better optimization
+            // fpm.add_instruction_combining_pass();
+            // fpm.add_reassociate_pass();
+            // fpm.add_gvn_pass();
+            // fpm.add_cfg_simplification_pass();
+            // fpm.add_basic_alias_analysis_pass();
+            // fpm.add_promote_memory_to_register_pass();
+            // fpm.add_instruction_combining_pass();
+            // fpm.add_loop_deletion_pass();
+            // fpm.add_loop_unroll_pass();
 
-            fpm.initialize();
+            // fpm.initialize();
 
             let compiler = &Compiler {
                 context: &context,
                 module,
                 builder,
-                fpm,
             };
 
             // Add libstd functions
@@ -175,20 +180,29 @@ fn main() {
             let main_type = compiler.context.i32_type().fn_type(&[], false);
             let main_fn = compiler.module.add_function("main", main_type, None);
 
-            let entry_basic_block = compiler.context.append_basic_block(main_fn, "entry");
+            let entry_basic_block = compiler.context.append_basic_block(main_fn, "");
             compiler.builder.position_at_end(entry_basic_block);
 
             log::info!("Converting AST to LLVM");
 
-            llvm(&compiler, &tree);
+            compile(&compiler, &tree, &entry_basic_block);
 
             compiler
                 .builder
                 .build_return(Some(&compiler.context.i32_type().const_zero()));
 
+            println!("{}", &compiler.module.print_to_string().to_str().unwrap());
+
             match compiler.module.verify() {
                 Err(x) => {
-                    log::error!("Module verification failed: {}", x.to_string());
+                    log::error!("│ {}", "Module verification failed".bold());
+                    let lines: Vec<&str> = x.to_str().unwrap().lines().collect();
+                    for line in &lines[0..lines.len() - 1] {
+                        log::error!("│  {}", line);
+                    }
+                    log::error!("└─ {}", lines.last().unwrap());
+                    println!();
+
                     std::process::exit(1);
                 }
                 _ => {}
@@ -198,11 +212,20 @@ fn main() {
 
             Target::initialize_x86(&InitializationConfig::default());
 
-            let opt = OptimizationLevel::Aggressive;
+            let opt = if release {
+                OptimizationLevel::Aggressive
+            } else {
+                OptimizationLevel::None
+            };
+
             let reloc = RelocMode::PIC;
             let model = CodeModel::Default;
 
-            let object_path = &build_dir.join(format!("{}.redd.it.o", project.config.name));
+            let object_path = &build_dir.join(format!(
+                "{}.reddit.{}",
+                project.config.name,
+                if assembly { "s" } else { "o" }
+            ));
 
             let target = Target::from_name("x86-64").unwrap();
             let target_triple = &TargetMachine::get_default_triple();
@@ -213,7 +236,11 @@ fn main() {
             target_machine
                 .write_to_file(
                     &compiler.module,
-                    inkwell::targets::FileType::Object,
+                    if assembly {
+                        FileType::Assembly
+                    } else {
+                        FileType::Object
+                    },
                     &object_path,
                 )
                 .unwrap();
@@ -243,7 +270,14 @@ fn main() {
 
             log::info!("Done! Executable is avalible at {}", output_file.bold());
         }
-        Commands::New { name } => todo!(),
+        Commands::New { name: _name } => todo!(),
+        Commands::Clean => {
+            let project = get_project();
+            let build_dir = Path::new(&project.path).join("build");
+
+            log::info!("Cleaning");
+            fs::remove_dir_all(build_dir).unwrap();
+        }
     }
 }
 
