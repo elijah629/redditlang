@@ -99,7 +99,7 @@ Import    =  { ImportKwd ~ String }
 AccessibilityModifier = { "bar " }
 
 // Variables
-VariableKwd         = _{ "meth" | "crack" }
+VariableKwd         =  { "meth" | "crack" }
 VariableMods        =  { AccessibilityModifier* }
 Variable            =  { VariableMods ~ VariableKwd ~ Declaration ~ Assignment ~ Expr }
 AssignmentStatement =  {
