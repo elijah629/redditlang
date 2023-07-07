@@ -18,7 +18,6 @@ Statement  =  {
   | Import
   | Module
   | Variable
-  | ConstVariable
   // REMOVAL: Will be removed. Classes should be used. just add an enum keyword
   // | TypeDef
 
@@ -100,11 +99,9 @@ Import    =  { ImportKwd ~ String }
 AccessibilityModifier = { "bar " }
 
 // Variables
-VariableKwd         = _{ "meth" }
-ConstVariableKwd    = _{ "crack" }
+VariableKwd         = _{ "meth" | "crack" }
 VariableMods        =  { AccessibilityModifier* }
 Variable            =  { VariableMods ~ VariableKwd ~ Declaration ~ Assignment ~ Expr }
-ConstVariable       =  { VariableMods ~ ConstVariableKwd ~ Declaration ~ Assignment ~ Expr }
 AssignmentStatement =  {
     Ident ~ Assignment ~ Expr
 }
