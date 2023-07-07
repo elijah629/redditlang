@@ -1,6 +1,4 @@
-use inkwell::{
-    builder::Builder, context::Context, module::Module, passes::PassManager, values::FunctionValue,
-};
+use inkwell::{basic_block::BasicBlock, builder::Builder, context::Context, module::Module};
 
 use crate::parser::{Node, Tree};
 
@@ -11,22 +9,21 @@ pub mod compile_node;
 pub struct Compiler<'ctx> {
     pub context: &'ctx Context,
     pub builder: Builder<'ctx>,
-    pub fpm: PassManager<FunctionValue<'ctx>>,
     pub module: Module<'ctx>,
 }
 
-pub fn llvm<'ctx>(compiler: &Compiler, tree: &Tree) {
+pub fn compile<'ctx>(compiler: &Compiler, tree: &Tree, basic_block: &BasicBlock) {
     for node in tree {
-        llvm_one(&compiler, node);
+        llvm_one(&compiler, &node, &basic_block);
     }
 }
 
-pub fn llvm_one(compiler: &Compiler, node: &Node) {
+pub fn llvm_one(compiler: &Compiler, node: &Node, basic_block: &BasicBlock) {
     match node {
-        Node::Loop(_) => todo!(),
-        Node::Break(_) => todo!(),
+        Node::Loop(r#loop) => r#loop.compile(compiler, basic_block),
+        Node::Break(r#break) => todo!(), // Need to fix
         Node::Function(_) => todo!(),
-        Node::Call(call) => call.compile(compiler),
+        Node::Call(call) => call.compile(compiler, basic_block),
         Node::Throw(_) => todo!(),
         Node::Import(_) => todo!(),
         Node::Module(_) => todo!(),
