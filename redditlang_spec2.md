@@ -28,7 +28,6 @@ The official PEG grammar file `grammar.pest` should be included with this docume
     - [Walter](#walter)
   - [Standard library](#standard-library)
 
-
 ## Document Conventions
 
 These are common syntaxes used in this document that refer to parts of the parser.
