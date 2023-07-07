@@ -1,6 +1,7 @@
 subreddit r/ProgammerHumor
 
-weneed "meth.rl"
+# These statements have identical meanings
+weneed "ProgrammerHumor"
 bringme "memes.rl"
 
 repeatdatshid {
