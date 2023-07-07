@@ -36,15 +36,15 @@ A name within chevrons (`< >`) refers to one of these:
 
 - `IDENT`
   
-  Alphabetic character followed by alphanumeric characters or underscores. Short for 'identifier'.
+  Alphabetic character or underscore followed by alphanumeric characters or underscores. Short for 'identifier'.
   
   Example:
 
   ```r
-  ident # This is an identifier
-  2ident # This is NOT an identifier
-  ide_nt # This is an identifier
-  _ident # This is NOT an identifier 
+  ident  # This is valid   ✅
+  2ident # This is invalid ❌
+  ide_nt # This is valid   ✅
+  _ident # This is valid   ✅
   ```
 
 - `DECLARATION`
