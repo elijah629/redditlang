@@ -1,5 +1,5 @@
 [book]
-authors = ["elijah629"]
+authors = ["contributors of the redditlang specification"]
 language = "en"
 multilingual = false
 src = "src"
