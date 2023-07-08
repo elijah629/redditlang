@@ -2,6 +2,9 @@
 name = "walter"
 version = "0.1.8"
 edition = "2021"
+description = "Build tool for https://github.com/elijah629/redditlang"
+repository = "https://github.com/elijah629/redditlang"
+license = "MIT"
 
 [dependencies]
 cc = "1.0.79"
