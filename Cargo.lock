@@ -865,7 +865,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "walter"
-version = "0.1.0"
+version = "0.1.8"
 dependencies = [
  "cc",
  "clap",

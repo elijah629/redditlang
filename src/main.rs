@@ -1,5 +1,5 @@
 use crate::{
-    errors::error,
+    errors::syntax_error,
     llvm::{compile, Compiler},
 };
 use clap::{Parser, Subcommand};
@@ -72,8 +72,7 @@ fn get_project() -> Project {
     match Project::from_path(env::current_dir().unwrap().as_path()) {
         Some(x) => x,
         None => {
-            log::error!("No valid {} found.", "walter.yml".bold());
-            std::process::exit(1);
+            error!("No valid {} found.", "walter.yml".bold());
         }
     }
 }
@@ -118,8 +117,7 @@ fn main() {
             let std_path = match build_libstd() {
                 Ok(x) => x,
                 Err(x) => {
-                    log::error!("Error building libstd: {:?}", x);
-                    std::process::exit(1);
+                    error!("Error building libstd: {:?}", x);
                 }
             };
 
@@ -193,19 +191,13 @@ fn main() {
 
             println!("{}", &compiler.module.print_to_string().to_str().unwrap());
 
-            match compiler.module.verify() {
-                Err(x) => {
-                    log::error!("│ {}", "Module verification failed".bold());
-                    let lines: Vec<&str> = x.to_str().unwrap().lines().collect();
-                    for line in &lines[0..lines.len() - 1] {
-                        log::error!("│  {}", line);
-                    }
-                    log::error!("└─ {}", lines.last().unwrap());
-                    println!();
-
-                    std::process::exit(1);
+            if let Err(x) = compiler.module.verify() {
+                log::error!("│ {}", "Module verification failed".bold());
+                let lines: Vec<&str> = x.to_str().unwrap().lines().collect();
+                for line in &lines[0..lines.len() - 1] {
+                    log::error!("│  {}", line);
                 }
-                _ => {}
+                error!("└─ {}\n", lines.last().unwrap());
             };
 
             log::info!("Compiling");
@@ -284,6 +276,6 @@ fn main() {
 fn parse_file(file: &str) -> Tree {
     match RLParser::parse(Rule::Program, file) {
         Ok(x) => parse(x),
-        Err(x) => error(x),
+        Err(x) => syntax_error(x),
     }
 }

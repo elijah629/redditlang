@@ -1,6 +1,6 @@
 use crate::{from_pair::Parse, Rule};
 
-type Number = i128; // Number type
+pub type Number = f64; // Number type
 
 #[derive(Debug)]
 pub enum Term {
@@ -179,6 +179,7 @@ pub struct ChainedExpr<T> {
 #[derive(Debug)]
 pub struct ChainedExprTerm<T> {
     pub operand: Term,
+
     /// None on the last term
     pub operator: Option<T>,
 }

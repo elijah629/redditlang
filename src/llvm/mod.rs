@@ -1,6 +1,9 @@
 use inkwell::{basic_block::BasicBlock, builder::Builder, context::Context, module::Module};
 
-use crate::parser::{Node, Tree};
+use crate::{
+    bug,
+    parser::{Node, Tree},
+};
 
 use self::compile_node::Compile;
 
@@ -12,16 +15,16 @@ pub struct Compiler<'ctx> {
     pub module: Module<'ctx>,
 }
 
-pub fn compile<'ctx>(compiler: &Compiler, tree: &Tree, basic_block: &BasicBlock) {
+pub fn compile<'a>(compiler: &Compiler<'a>, tree: &Tree, basic_block: &BasicBlock<'a>) {
     for node in tree {
         llvm_one(&compiler, &node, &basic_block);
     }
 }
 
-pub fn llvm_one(compiler: &Compiler, node: &Node, basic_block: &BasicBlock) {
+pub fn llvm_one<'a>(compiler: &Compiler<'a>, node: &Node, basic_block: &BasicBlock<'a>) {
     match node {
         Node::Loop(r#loop) => r#loop.compile(compiler, basic_block),
-        Node::Break(r#break) => todo!(), // Need to fix
+        Node::Break(_break) => todo!(), // Need to fix,                                                   but won't
         Node::Function(_) => todo!(),
         Node::Call(call) => call.compile(compiler, basic_block),
         Node::Throw(_) => todo!(),
@@ -30,9 +33,9 @@ pub fn llvm_one(compiler: &Compiler, node: &Node, basic_block: &BasicBlock) {
         Node::TryCatch(_) => todo!(),
         Node::Variable(_) => todo!(),
         Node::Assignment(_) => todo!(),
-        Node::If(_) => todo!(),
+        Node::If(r#if) => r#if.compile(compiler, basic_block),
         Node::Class(_) => todo!(),
         Node::Return(_) => todo!(),
-        Node::Expr(_) => todo!(),
+        Node::Expr(_) => bug!("EXPR_IS_STATEMENT_COMPILER"),
     }
 }

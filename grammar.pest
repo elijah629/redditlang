@@ -18,9 +18,6 @@ Statement  =  {
   | Import
   | Module
   | Variable
-  // REMOVAL: Will be removed. Classes should be used. just add an enum keyword
-  // | TypeDef
-
   | AssignmentStatement
   | IfBlock
   | Class
@@ -62,7 +59,8 @@ CallArgs =  { "(" ~ CallArg* ~ ")" }
 // Exprs
 ConditionalExpr =  { Term ~ (ConditionalOperator ~ Term)+ }
 BinaryExpr      =  { Term ~ (MathOperator ~ Term)+ }
-IndexExpr       =  { Term ~ "[" ~ (Number | String) ~ "]" }
+IndexExpr       =  { Term ~ "[" ~ Index ~ "]" }
+Index           =  { BinaryExpr | UNumber | String | Ident | "(" ~ Index ~ ")" }
 Expr            =  {
     ConditionalExpr
   | BinaryExpr
@@ -75,13 +73,8 @@ Term            = _{ Literal | Call | Ident | "(" ~ Expr ~ ")" }
 // Types
 TypedIdentKwd = _{ "damn " }
 TypedIdent    = _{ Ident ~ TypedIdentKwd ~ Type }
-// TypeDefKwd    = _{ "specimin" }
-// TypeDefInhrt  = _{ ("(" ~ (Ident ~ ",")* ~ ") ")? }
-
-/// MIGHT BE REMOVED
-// TypeDef   = { TypeDefKwd ~ TypeDefInhrt ~ Ident ~ Assignment ~ Literal }
-TypeArray = { "[]" }
-Type      = { Ident ~ TypeArray? }
+TypeArray     =  { "[]" }
+Type          =  { Ident ~ TypeArray? }
 
 // Throw, Try, Catch
 Throw    = { "shoot " ~ Expr }
@@ -108,13 +101,18 @@ AssignmentStatement =  {
 
 // Operators
 // Conditional
-Equality     = { "⅀" }
-AntiEquality = { "≠" }
+Equality           = { "⅀" }
+Inequality         = { "≠" }
+GreaterThan        = { ">" }
+GreaterThanOrEqual = { "⋝" }
+LessThan           = { "<" }
+LessThanOrEqual    = { "⋜" }
 
 // Math
 Add      = { "⨋" }
-Subtract = { "-" }
-Multiply = { "*" }
+/// Not U+2012 (figure dash) but U+2013 (en dash)
+Subtract = { "–" }
+Multiply = { "⋇" }
 Divide   = { "⎲" }
 XOR      = { "⊕" }
 
@@ -122,9 +120,9 @@ XOR      = { "⊕" }
 Assignment = _{ "∑" }
 Negation   =  { "¡" }
 
-UnaryOperator       = _{ Add | Subtract | Negation }
-ConditionalOperator =  { Equality | AntiEquality }
-MathOperator        =  { UnaryOperator | Multiply | Divide | XOR }
+UnaryOperator       = { Add | Subtract | Negation }
+ConditionalOperator = { Equality | Inequality | GreaterThan | GreaterThanOrEqual | LessThan | LessThanOrEqual }
+MathOperator        = { Add | Subtract | Multiply | Divide | XOR }
 
 // Class
 ClassKwd = _{ "school " }
@@ -140,13 +138,11 @@ Char          = _{
   | "\\" ~ ("x" ~ ASCII_HEX_DIGIT{2})
 }
 
-UInt    = @{ ASCII_DIGIT+ }
-Int     = @{ UnaryOperator? ~ UInt }
-Decimal = @{ Int ~ "." ~ ASCII_DIGIT+ }
-Number  = @{
-    Decimal
-  | Int
-}
+Sign = _{ Add | Subtract }
+Magnitude =  { (ASCII_DIGIT+ ~ ".")? ~ ASCII_DIGIT+ }
+Number    = ${ Sign? ~ Magnitude }
+/// Only for syntax errors ( constant indexes ), must convert to the "Number" type of the AST
+UNumber   = ${ Add? ~ Magnitude }
 
 Null = { "wat" }
 

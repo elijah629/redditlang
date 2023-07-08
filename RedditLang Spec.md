@@ -1,8 +1,8 @@
-# RedditLang 2023.0.1.7
+# RedditLang 2023.0.1.8
 
 This is a high level overview of redditlang’s syntax and features. It is organized by the header being the feature, a list of implementation notes, the actual syntax and then footnotes.
 
-The official PEG grammar file `grammar.pest` should be included with this document.
+The official PEST grammar file, [grammar.pest](./grammar.pest) should be included with this document.
 
 ## Contents
 
@@ -35,29 +35,32 @@ These are common syntaxes used in this document that refer to parts of the parse
 A name within chevrons (`< >`) refers to one of these:
 
 - `IDENT`
-  
-  Alphabetic character or underscore followed by alphanumeric characters or underscores. Short for 'identifier'.
-  
-  Example:
 
-  ```r
-  ident  # This is valid   ✅
-  2ident # This is invalid ❌
-  ide_nt # This is valid   ✅
-  _ident # This is valid   ✅
+  Alphabetic character or underscore followed by alphanumeric characters or underscores. Short for 'identifier'.
+
+  **Example**
+
+  ```redditlang
+  text   # This is valid   ✅
+  te_xt  # This is valid   ✅
+  _text  # This is valid   ✅
+
+  42     # This is invalid ❌
+  42text # This is invalid ❌
+  te xt  # This is invalid ❌
   ```
 
 - `DECLARATION`
-  
-  `<IDENT> damn <TYPE>`, or
-  
-  `<IDENT>` (Without type annotations)
-  
-  Where type is `<IDENT>(<IDENT...>)?` where the paranthesised `<IDENT>` is a generic parameter. Everything in parantheses are optional and the list is separated and terminated by commas.
-  
-  Example:
 
-  ```r
+  `<IDENT> damn <TYPE>`, or
+
+  `<IDENT>` (Without type annotations)
+
+  Where type is `<IDENT>(<IDENT...>)?` where the paranthesised `<IDENT>` is a generic parameter. Everything in parantheses are optional and the list is separated and terminated by commas.
+
+  **Example**
+
+  ```redditlang
   identifier damn Number(x damn Number,)
   ```
 
@@ -78,16 +81,16 @@ A token suffixed by a question mark (`?`) refers to the below:
 
 - `(<IDENT...>)?`
   Parantheses and everything within are optional.
-  
+
 A `<TERM>` is an identifier, number, string or expression.
 
 ## Blocks
 
 - Blocks are created by curly braces.
 
-  Example:
+  **Example**
 
-  ```r
+  ```redditlang
   { # This is a block
     # Statements can appear within a black
   } # This terminates the block
@@ -100,9 +103,9 @@ A `<TERM>` is an identifier, number, string or expression.
 - Statements shall only appear at the top level of the file, and inside blocks.
 - Top-level statements have priority in processing.
 
-  Example:
+  **Example**
 
-  ```r
+  ```redditlang
   # This is the top level of a file.
   statement # This is a statement.
   next_statement # This is another statement.
@@ -124,11 +127,11 @@ The variable creation keyword is `meth`.
 
 They can ony be defined at the top level of modules, or in blocks.
 
-An initialiser is required.
+An initializer is required.
 
 Standard form:
 
-```r
+```redditlang
 meth <IDENT> ∑ <EXPR>
 ```
 
@@ -140,7 +143,7 @@ Array access
 
 - Standard form:
 
-  ```r
+  ```redditlang
   <TYPE>[]
   ```
 
@@ -151,11 +154,11 @@ Array access
 - The loop keyword is `repeatdatshid`.
 - The break keyword is `sthu`.
   Standard form:
-  
-  ```r
+
+  ```redditlang
   repeatdatshid { # Opens a loop
-    # Code to execute 
-    sthu # Breks the loop 
+    # Code to execute
+    sthu # Breks the loop
   }
   ```
 
@@ -165,21 +168,21 @@ The if keyword is `is`.
 
 Standard form:
 
-```r
+```redditlang
 is <EXPR> {
-  # Code 
-} 
+  # Code
+}
 ```
 
 The else keyword is `isnt`.
 
 Standard form:
 
-```r
+```redditlang
 is <EXPR> {
   # Code
 } isnt {
-  # Code 
+  # Code
 }
 ```
 
@@ -187,7 +190,7 @@ The else-if keyword is `but`.
 
 Standard form:
 
-```r
+```redditlang
 is <EXPR> {
   # Code
 } but <EXPR> {
@@ -210,7 +213,7 @@ Conditional
 - Returns a boolean.
 - Standard form:
 
-  ```r
+  ```redditlang
   <TERM> <CONDITIONAL_OPERATOR> <TERM>
   ```
 
@@ -218,7 +221,7 @@ Binary
 
 - Standard form:
 
-  ```r
+  ```redditlang
   <TERM> <MATHEMATICAL_OPERATOR> <TERM>
   ```
 
@@ -227,7 +230,7 @@ Indexing
 - Returns type at index of array.
 - Standard form:
 
-  ```r
+  ```redditlang
   <TERM>[<UNSIGNED_INT>]
   ```
 
@@ -239,10 +242,10 @@ Function Declaration
 - Functions have an identifier, and a return type.
 - They can optionally include a modifier and an arbitrary number of arguments.
 - Standard form:
-  
-  ```r
+
+  ```redditlang
   <FUNCTION_MOD...> callmeonmycellphone <DECLARATION>(<DECLARATION...>?) {
-    # Block 
+    # Block
   }
   ```
 
@@ -258,7 +261,7 @@ Function Calls
 - The call keyword is `call`.
 - Standard form:
 
-  ```r
+  ```redditlang
   call <IDENT>(<EXPR...>?)
   ```
 
@@ -269,7 +272,7 @@ Function returns
 - The return keyword is `spez`.
 - Standard form:
 
-  ```r
+  ```redditlang
   spez <EXPR>
   ```
 
@@ -281,8 +284,8 @@ Function returns
 - The throw keyword is `shoot`.
 - Only expressions can be shot.
 - Standard `shoot` form:
-  
-  ```r
+
+  ```redditlang
   shoot <EXPR>
   ```
 
@@ -291,10 +294,10 @@ Function returns
 - A `test-wall` is composed of one test and one wall.
 - Wall statements can optionally have one expression. Without a expression, wall will catch all expressions shot.
 - Standard `test-wall` form:
-  
-  ```r
+
+  ```redditlang
   test {
-    # Code that possibly shoots a bullet 
+    # Code that possibly shoots a bullet
   } wall <IDENT>? {
     # Handle exception
   }
@@ -308,106 +311,78 @@ Multi-line comments are prefixed by `#*` and suffixed by `*#`.
 
 ## Primitive types
 
-Boolean
+### Boolean
 
-- The true keyword is `Yup`.
-- The false keyword is `Nope`.
+| Varient | Meaning |
+| ------- | ------- |
+| `Yup`   | True    |
+| `Nope`  | False   |
 
-Foolean
+### Foolean
 
-- An extension of the boolean types.
-- The null keyword is `IDK`.
-- The I/O Failure keyword is`Huh`.
-- The random boolean keyword is `Yeet`.
+- Contains all varients of a `Boolean`
+- Has these additional varients
 
-String
+| Varient | Meaning          |
+| ------- | ---------------- |
+| `Dunno` | Null             |
+| `Huh`   | I/O Failure      |
+| `Yeet`  | Random `Foolean` |
 
-- An array of chars.
+### String
 
-Number
+- An array of characters.
 
-- A numeric value.
-- The way a number is stored should be expanding, i.e. start with the smallest size, then incrementing as required to contain a value.
+### Number
 
-- Integer
+- f64s' or doubles
+- Positive by default
+- Doesn't require a `<SIGN>`
+- Standard form:
 
-  - An integer.
-  - Standard form:
+```redditlang
+<SIGN?><UNSIGNED_INTEGER>
+```
 
-    ```r
-    <UNARY_OPERATOR><UNSIGNED_INTEGER>
-    ```
+#### Sign
 
-  - Available sizes:
-    - 8-bit unsigned integer
-    - 8-bit signed integer
-    - 16-bit unsigned integer
-    - 16-bit signed integer
-    - 32-bit unsigned integer
-    - 32-bit signed integer
-    - 64-bit unsigned integer
-    - 64-bit signed integer
-    - 128-bit unsigned integer
-    - 128-bit signed integer
+- `Add` or `Subtrat` operator symbol
 
-- Decimal
-
-  - A real number.
-  - Equivalent to a 64-bit floating point number.
-  - Standard form:
-
-    ```r
-    <UNARY_OPERATOR><UNSIGNED_INTEGER>.<UNSIGNED_INTEGER>
-    ```
-
-  - Available sizes:
-    - 32-bit float
-    - 64-bit float
-    - 128-bit float
-
-uint
-
-- A positive integers.
-- The way a number is stored should be expanding, i.e. start with the smallest size, then incrementing as required to contain a value.
-- Primarily used for array indexes.
-- Available sizes:
-  - 8-bit unsigned integer
-  - 16-bit unsigned integer
-  - 32-bit unsigned integer
-  - 64-bit unsigned integer
-  - 128-bit unsigned integer
-
-Null
+### Null
 
 - The null keyword is `wat`.
 
-Arrays
+### Arrays
 
 - Array types are suffixed by the `[]` token.
 - Array indexes start with `1`.
 
 ## Operators
 
-Conditional
+### Conditional
 
 - The equality operator is `⅀`
 - The inequality operator is `≠`
+- The greater than operator is `>`
+- The greater than or equal to operator is`⋝`
+- The less than operator is `<`
+- The less than or equal to operator is `⋜`
 
-Math
+### Math
 
 - The addition binary operator is `⨋`
-- The subtraction binary operator is `-`
-- The multiplication binary operator is `*`
+- The subtraction binary operator is `–` **Note: This is not U+2012 ( dash ), this is U+2013 ( en dash )**
+- The multiplication binary operator is `⋇`
 - The XOR binary operator is `⊕`
 - The division binary operator is `⎲`
 
-Unary
+### Unary
 
 - The positive unary operator is `⨋`
-- The negative unary operator is `-`
+- The negative unary operator is `–`
 - The negation unary operator is `¡`
 
-Other
+### Other
 
 - The assignment operator is `∑`
 
@@ -417,22 +392,21 @@ The class definition keyword is `school`.
 
 Standard form:
 
-```r
+```redditlang
 school <IDENT> {
   # Parts of the class
 }
 ```
 
-The constructor member function name is `cooK`.
-
+The constructor member function name is `cooK`.  
 The destructor member function name is `snoRt`.
 
 Constructors and destructors have the `bar` function modifier by default.
 
-Example:
+**Example**
 
-```r
-school exampleClass {
+```redditlang
+school myClass {
   callmeonmycellphone cooK() {
     # Constructor
   }
@@ -456,13 +430,13 @@ Importing modules
 - A module name must be specified after the keyword in quotes.
 - Standard form:
 
-  ```r
+  ```redditlang
   weneed "<MODULE_NAME>"
   ```
 
   or,
-  
-  ```r
+
+  ```redditlang
   bringme "<MODULE_NAME>"
   ```
 
@@ -473,7 +447,7 @@ Creating modules
 - The `subreddit` keyword can only appear once, at the top of each file.
 - Standard form:
 
-  ```r
+  ```redditlang
   subreddit r/<MODULE_NAME>
   ```
 
@@ -485,10 +459,10 @@ The standard debugger is `jesse`.
 
 ### Walter
 
-Initialising a project
+initializing a project
 
 1. Navigate to your project folder in your command line.
-2. Run `walter new` to initialise a new project.
+2. Run `walter new` to initialize a new project.
 
 Default project structure
 
@@ -502,7 +476,7 @@ All source files are placed in `src/`.
 
 `walter.yml` should contain a `name` and `version` attribute, within double inverted commas.
 
-```yml
+```redditlang
 name: "<NAME>"
 version: "<VERSION_NUMBER"
 ```
@@ -512,7 +486,7 @@ Building
 - The command to build a project is `cook`.
 - Standard form:
 
-  ```bash
+  ```redditlang
   walter cook
   ```
 
@@ -521,7 +495,7 @@ Cleaning
 - The command to remove build directory is `clean`.
 - Standard form:
 
-  ```bash
+  ```redditlang
   walter clean
   ```
 
@@ -537,29 +511,32 @@ Modules:
 std/io functions
 
 - `coitusinterruptus`
+
   - Standard print function.
   - Function signature:
 
-    ```r
+    ```redditlang
     call coitusinterruptus(text damn String)
     ```
 
 - `pulloutnt`
+
   - Standard readline.
   - Reads a line from `stdio` and returns it without a newline at the end.
   - Function signature:
 
-    ```r
+    ```redditlang
     call String pulloutnt()
     ```
 
 std/time functions
 
 - `zzz`
+
   - Standard sleep function.
   - Stops the current thread for `timeMs` seconds.
   - Function signature:
 
-    ```r
+    ```redditlang
     call zzz(timeMs damn Number)
     ```

@@ -1,7 +1,9 @@
+use core::fmt;
+
 use colored::Colorize;
 use pest::error::LineColLocation;
 
-use crate::Rule;
+use crate::{errors, Rule};
 
 pub fn format_error(error: pest::error::Error<Rule>) -> String {
     let code = error.line();
@@ -36,10 +38,35 @@ pub fn format_error(error: pest::error::Error<Rule>) -> String {
     );
 }
 
-pub fn error(error: pest::error::Error<Rule>) -> ! {
-    eprintln!("{}", format_error(error));
+pub fn syntax_error(syntax_error: pest::error::Error<Rule>) -> ! {
+    error!("{}", format_error(syntax_error));
+}
+
+const ERR_BUG: &str =
+    "Error! This is a bug, please report this at https://github.com/elijah629/redditlang/issues. Make sure to include your code! Additional Information: ";
+
+pub fn _bug(args: fmt::Arguments) -> ! {
+    error!("{}{}", ERR_BUG, args);
+}
+
+pub fn _error(args: fmt::Arguments) -> ! {
+    log::error!("{}", args);
     std::process::exit(1);
 }
 
-pub const ERR_BUG: &str =
-    "Unexpected error. This is a bug, please report this at https://github.com/elijah629/redditlang/issues";
+#[macro_export]
+macro_rules! error {
+    ($($arg:tt)*) => {{
+        $crate::errors::_error(std::format_args!($($arg)*));
+    }};
+}
+
+#[macro_export]
+macro_rules! bug {
+    ($($arg:tt)*) => {{
+        $crate::errors::_bug(std::format_args!($($arg)*));
+    }};
+}
+
+pub(crate) use bug;
+pub(crate) use error;

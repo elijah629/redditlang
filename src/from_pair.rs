@@ -1,13 +1,13 @@
-use crate::errors::{error, ERR_BUG};
+use crate::errors::syntax_error;
 use crate::parser::{
     parse, parse_one, Assignment, BinaryExpr, BinaryExprTerm, Break, Call, Catch, Class,
     ConditionExprTerm, ConditionalExpr, ConditionalOperator, Declaration, Else, ElseIf, Expr,
     Function, FunctionMod, Ident, If, IfBlock, IfNode, Import, Index, IndexExpr, Loop,
-    MathOperator, Module, Node, Return, Term, Throw, Tree, Try, TryCatch, Type, Variable,
+    MathOperator, Module, Node, Number, Return, Term, Throw, Tree, Try, TryCatch, Type, Variable,
     VariableMod,
 };
 use crate::utils::is_unique;
-use crate::Rule;
+use crate::{bug, Rule};
 use pest::error::Error;
 use pest::iterators::Pair;
 
@@ -42,7 +42,7 @@ impl Parse for Function {
             .map(|modifier| match modifier.as_str() {
                 "debug" => FunctionMod::Debug,
                 "bar" => FunctionMod::Public,
-                _ => error(Error::new_from_pos(
+                _ => syntax_error(Error::new_from_pos(
                     pest::error::ErrorVariant::CustomError {
                         message: "Invalid modifier".to_owned(),
                     },
@@ -62,7 +62,7 @@ impl Parse for Function {
 
         let has_duplicates = !is_unique(args.iter().map(|x| &x.ident.0));
         if has_duplicates {
-            error(Error::new_from_pos(
+            syntax_error(Error::new_from_pos(
                 pest::error::ErrorVariant::CustomError {
                     message: "Duplicate arguments".to_owned(),
                 },
@@ -85,8 +85,25 @@ impl Parse for Term {
             Rule::String => Some(Self::String(
                 enquote::unquote(pair.as_str()).unwrap().to_string(),
             )),
-            Rule::Number => Some(Self::Number(pair.as_str().parse().unwrap())),
+            Rule::UNumber => None,
+            Rule::Number => {
+                let mut inner = pair.into_inner();
+                let has_sign = inner.len() == 2;
+                let sign = if has_sign { inner.next() } else { None };
+                let is_negative = sign
+                    .map(|x| match x.as_rule() {
+                        Rule::Add => false,
+                        Rule::Subtract => true,
+                        _ => bug!("INVALID_SIGN({:?})", x.as_rule()),
+                    })
+                    .unwrap_or(false);
+
+                let magnitude: Number = inner.next().unwrap().as_str().parse().unwrap();
+                let value = if is_negative { -magnitude } else { magnitude };
+                Some(Self::Number(value))
+            }
             Rule::Ident => Some(Self::Ident(Ident::parse_from(pair).unwrap())),
+            Rule::Expr => None, // TODO: Expr in parenthases
             _ => None,
         }
     }
@@ -159,11 +176,7 @@ impl Parse for TryCatch {
                 Ident::parse_from(first),
                 Tree::parse_from(catch.next().unwrap()).unwrap(),
             ),
-            _ => panic!(
-                "{} Additional Information: NOT_CATCH_OR_IDENT({:?})",
-                ERR_BUG,
-                first.as_rule()
-            ),
+            _ => bug!("CATCH_NOT_BLOCK_OR_IDENT({:?})", first.as_rule()),
         };
         Some(TryCatch { r#try, catch })
     }
@@ -180,7 +193,7 @@ impl Parse for Variable {
             .map(|modifier| modifier.as_str().trim_end().to_string())
             .map(|modifier| match modifier.as_str() {
                 "bar" => VariableMod::Public,
-                _ => error(Error::new_from_pos(
+                _ => syntax_error(Error::new_from_pos(
                     pest::error::ErrorVariant::CustomError {
                         message: "Invalid modifier".to_owned(),
                     },
@@ -201,22 +214,28 @@ impl Parse for Variable {
 
 impl Parse for BinaryExpr {
     fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
-        Some(Self {
-            terms: pair
-                .into_inner()
-                .collect::<Vec<_>>()
-                .chunks(2)
-                .map(|x| BinaryExprTerm {
-                    operand: Term::parse_from((x[0]).clone()).unwrap(),
-                    operator: x.get(1).and_then(|x| {
-                        match x.clone().into_inner().next().unwrap().as_rule() {
-                            Rule::Subtract => Some(MathOperator::Subtract),
-                            Rule::Multiply => Some(MathOperator::Multiply),
-                            Rule::Divide => Some(MathOperator::Divide),
-                            Rule::XOR => Some(MathOperator::XOR),
-                            _ => panic!("Unknown operator"),
-                        }
-                    }),
+        let mut pairs = pair.into_inner().collect::<Vec<_>>();
+        let first = &[pairs.remove(0)];
+
+        let mut pairs = pairs.chunks(2).collect::<Vec<_>>();
+        pairs.insert(0, first);
+
+        Some(BinaryExpr {
+            terms: pairs
+                .into_iter()
+                .map(|x| {
+                    let operator = if x.len() == 2 { x.get(0) } else { None };
+                    let operator =
+                        operator.map(|x| match x.clone().into_inner().next().unwrap().as_rule() {
+                            Rule::Add => MathOperator::Add,
+                            Rule::Subtract => MathOperator::Subtract,
+                            Rule::Multiply => MathOperator::Multiply,
+                            Rule::Divide => MathOperator::Divide,
+                            Rule::XOR => MathOperator::XOR,
+                            _ => bug!("UNKNOWN_OPERATOR({:?})", x.as_rule()),
+                        });
+                    let operand = Term::parse_from(x.last().unwrap().clone()).unwrap();
+                    BinaryExprTerm { operand, operator }
                 })
                 .collect::<Vec<_>>(),
         })
@@ -233,10 +252,11 @@ impl Parse for ConditionalExpr {
                 .map(|x| ConditionExprTerm {
                     operand: Term::parse_from((x[0]).clone()).unwrap(),
                     operator: x.get(1).and_then(|x| {
-                        match x.clone().into_inner().next().unwrap().as_rule() {
+                        let rule = x.clone().into_inner().next().unwrap().as_rule();
+                        match rule {
                             Rule::Equality => Some(ConditionalOperator::Equality),
-                            Rule::AntiEquality => Some(ConditionalOperator::AntiEquality),
-                            _ => panic!("Unknown operator"),
+                            Rule::Inequality => Some(ConditionalOperator::AntiEquality),
+                            _ => bug!("UNKNOWN_COND_OPERATOR({:?})", rule),
                         }
                     }),
                 })
@@ -266,7 +286,7 @@ impl Parse for Expr {
         let value = parse_one(pair).expect("Invalid expression");
         match value {
             Node::Expr(x) => Some(x),
-            _ => error(Error::new_from_pos(
+            _ => syntax_error(Error::new_from_pos(
                 pest::error::ErrorVariant::CustomError {
                     message: "Value is not an expression".to_owned(),
                 },
@@ -299,7 +319,7 @@ impl Parse for IfBlock {
                 Rule::Else => IfNode::Else(Else {
                     body: Tree::parse_from(inner.next().unwrap()).unwrap(),
                 }),
-                _ => panic!("{}", ERR_BUG),
+                _ => bug!("IMPOSSIBLE_ERROR"),
             }
         }
 
@@ -307,7 +327,7 @@ impl Parse for IfBlock {
             .into_inner()
             .map(|x| match x.as_rule() {
                 Rule::If | Rule::ElseIf | Rule::Else => if_node(x),
-                _ => panic!("{}", ERR_BUG),
+                _ => bug!("INVALID_IFNODE({:?})", x.as_rule()),
             })
             .collect();
 
@@ -343,7 +363,7 @@ impl Parse for IndexExpr {
         let index = match index {
             Term::Number(x) => Index::Number(x),
             Term::String(x) => Index::String(x),
-            _ => panic!("{:?}", ERR_BUG),
+            _ => bug!("INVALID_INDEX_TERM({:?})", index),
         };
         Some(Self { term, index })
     }
