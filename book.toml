@@ -1,0 +1,6 @@
+[book]
+authors = ["elijah629"]
+language = "en"
+multilingual = false
+src = "src"
+title = "The RedditLang Reference"
