@@ -68,5 +68,4 @@ macro_rules! bug {
     }};
 }
 
-pub(crate) use bug;
 pub(crate) use error;

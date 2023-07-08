@@ -142,7 +142,7 @@ fn main() {
 
             // let fpm = PassManager::create(&module);
 
-            // // TODO: Add more passes for better optimization
+            // // TODO!: Add more passes for better optimization
             // fpm.add_instruction_combining_pass();
             // fpm.add_reassociate_pass();
             // fpm.add_gvn_pass();
