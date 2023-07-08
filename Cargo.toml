@@ -1,5 +1,5 @@
 [package]
-name = "walterc"
+name = "walter-redditlang"
 version = "0.1.8"
 edition = "2021"
 description = "Build tool for https://github.com/elijah629/redditlang"
