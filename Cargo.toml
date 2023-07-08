@@ -1,5 +1,5 @@
 [package]
-name = "walter"
+name = "walter_"
 version = "0.1.8"
 edition = "2021"
 description = "Build tool for https://github.com/elijah629/redditlang"
@@ -25,3 +25,7 @@ serde_yaml = "0.9.22"
 lto = true
 codegen-units = 1
 strip = true
+
+[[bin]]
+name = "walter"
+path = "src/main.rs"
