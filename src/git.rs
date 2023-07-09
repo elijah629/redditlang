@@ -33,21 +33,13 @@ pub fn clone_else_pull<P: AsRef<Path>>(
     Ok(())
 }
 
-pub fn checkout(repo: &Repository, object: &str) {
-    let (object, reference) = repo.revparse_ext(object).expect("Object not found");
-
-    repo.checkout_tree(&object, None)
-        .expect("Failed to checkout");
-
-    match reference {
-        // gref is an actual reference like branches or tags
-        Some(gref) => repo.set_head(gref.name().unwrap()),
-        // this is a commit, not a reference
-        None => repo.set_head_detached(object.id()),
-    }
-    .expect("Failed to set HEAD");
+pub fn checkout(repo: &Repository, refname: &str) -> Result<(), Box<dyn std::error::Error>> {
+    repo.set_head(&refname)?;
+    repo.checkout_head(Some(git2::build::CheckoutBuilder::default().force()))?;
+    Ok(())
 }
 
+/// Makes a new repository with the content of the repository at `url`
 pub fn generate<P: AsRef<Path>>(
     url: &str,
     branch: Option<&str>,
@@ -56,7 +48,7 @@ pub fn generate<P: AsRef<Path>>(
     let repo = Repository::clone(&url, &into)?;
 
     if let Some(branch) = branch {
-        checkout(&repo, branch);
+        checkout(&repo, branch)?;
     }
 
     fs::remove_dir_all(&into.as_ref().join(".git"))?;

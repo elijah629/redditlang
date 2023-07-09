@@ -1,6 +1,7 @@
 use crate::{
     errors::syntax_error,
     llvm::{compile, Compiler},
+    project::ProjectConfiguration,
 };
 use clap::{Parser, Subcommand};
 use colored::Colorize;
@@ -58,7 +59,6 @@ enum Commands {
     /// Creates a new walter project
     New {
         /// If you don't specify a name it is created in the current directory with the current directories name if it is empty.
-        #[arg(short, long)]
         name: Option<String>,
     },
 }
@@ -243,22 +243,36 @@ fn main() {
             log::info!("Done! Executable is avalible at {}", output_file.bold());
         }
         Commands::New { name } => {
-            let name = name.unwrap_or_else(|| {
-                env::current_dir()
-                    .unwrap()
-                    .file_name()
-                    .and_then(|x| x.to_str())
-                    .map(|x| x.to_string())
-                    .unwrap()
-            });
+            let cwd = env::current_dir().unwrap();
+            let path = match name {
+                Some(name) => cwd.join(name),
+                None => cwd,
+            };
 
-            let path = env::current_dir().unwrap().join(name);
             fs::create_dir_all(&path).unwrap();
+            let is_empty = fs::read_dir(&path).unwrap().count() == 0;
 
-            const WALTER_TEMPLATE_URL: &str = "https://github.com/elijah629/redditlang";
-            const WALTER_TEMPLATE_BRANCH: &str = "template";
+            let pathstr = path.to_str().unwrap().bold();
 
-            generate(WALTER_TEMPLATE_URL, Some(WALTER_TEMPLATE_BRANCH), &path).unwrap();
+            if !is_empty {
+                error!("{} exists and is not empty", pathstr);
+            }
+
+            let name = path.file_name().unwrap().to_str().unwrap().to_string();
+            log::info!("Creating {} at {}", name, pathstr);
+
+            const TEMPLATE_URL: &str = "https://github.com/elijah629/redditlang";
+            const TEMPLATE_REFNAME: &str = "refs/remotes/origin/template";
+
+            generate(TEMPLATE_URL, Some(TEMPLATE_REFNAME), &path).unwrap();
+
+            let yaml = serde_yaml::to_string(&ProjectConfiguration {
+                name,
+                version: "0.0.1".to_owned(),
+            })
+            .unwrap();
+
+            fs::write(&path.join("walter.yml"), yaml).unwrap();
         }
         Commands::Clean => {
             let project = get_project();
