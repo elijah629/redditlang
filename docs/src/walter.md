@@ -1,9 +1,9 @@
 # Walter
 
-initializing a project
+How to create a new project
 
 1. Navigate to your project folder in your command line.
-2. Run `walter new` to initialize a new project.
+2. Run `walter new <PACKAGE_NAME>` to initialize a new project, if you don't specify a name it is created in the current directory with the current directories name if it is empty.
 
 Default project structure
 
@@ -19,7 +19,7 @@ All source files are placed in `src/`.
 
 ```redditlang
 name: "<NAME>"
-version: "<VERSION_NUMBER"
+version: "<SEMVER_VERSION_NUMBER>"
 ```
 
 Building

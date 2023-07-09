@@ -1,9 +1,7 @@
-use core::fmt;
-
+use crate::Rule;
 use colored::Colorize;
+use core::fmt;
 use pest::error::LineColLocation;
-
-use crate::{errors, Rule};
 
 pub fn format_error(error: pest::error::Error<Rule>) -> String {
     let code = error.line();

@@ -4,7 +4,7 @@ use crate::{
 };
 use clap::{Parser, Subcommand};
 use colored::Colorize;
-use git::clone_else_pull;
+use git::{clone_else_pull, generate};
 use inkwell::{
     context::Context,
     targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine},
@@ -55,16 +55,11 @@ enum Commands {
     },
     /// Removes build dir
     Clean,
-    // /// Builds and runs a program
-    // Brwww {
-    //     /// Enables release mode, longer build but more optimizations.
-    //     #[arg(short, long)]
-    //     release: bool,
-    // },
     /// Creates a new walter project
     New {
+        /// If you don't specify a name it is created in the current directory with the current directories name if it is empty.
         #[arg(short, long)]
-        name: String,
+        name: Option<String>,
     },
 }
 
@@ -139,21 +134,6 @@ fn main() {
             let context = Context::create();
             let module = context.create_module("main");
             let builder = context.create_builder();
-
-            // let fpm = PassManager::create(&module);
-
-            // // TODO!: Add more passes for better optimization
-            // fpm.add_instruction_combining_pass();
-            // fpm.add_reassociate_pass();
-            // fpm.add_gvn_pass();
-            // fpm.add_cfg_simplification_pass();
-            // fpm.add_basic_alias_analysis_pass();
-            // fpm.add_promote_memory_to_register_pass();
-            // fpm.add_instruction_combining_pass();
-            // fpm.add_loop_deletion_pass();
-            // fpm.add_loop_unroll_pass();
-
-            // fpm.initialize();
 
             let compiler = &Compiler {
                 context: &context,
@@ -262,7 +242,24 @@ fn main() {
 
             log::info!("Done! Executable is avalible at {}", output_file.bold());
         }
-        Commands::New { name: _name } => todo!(),
+        Commands::New { name } => {
+            let name = name.unwrap_or_else(|| {
+                env::current_dir()
+                    .unwrap()
+                    .file_name()
+                    .and_then(|x| x.to_str())
+                    .map(|x| x.to_string())
+                    .unwrap()
+            });
+
+            let path = env::current_dir().unwrap().join(name);
+            fs::create_dir_all(&path).unwrap();
+
+            const WALTER_TEMPLATE_URL: &str = "https://github.com/elijah629/redditlang";
+            const WALTER_TEMPLATE_BRANCH: &str = "template";
+
+            generate(WALTER_TEMPLATE_URL, Some(WALTER_TEMPLATE_BRANCH), &path).unwrap();
+        }
         Commands::Clean => {
             let project = get_project();
             let build_dir = Path::new(&project.path).join("build");
