@@ -1,6 +1,6 @@
 [package]
 name = "walter-redditlang"
-version = "0.1.8"
+version = "0.1.9"
 edition = "2021"
 description = "Build tool for https://github.com/elijah629/redditlang"
 repository = "https://github.com/elijah629/redditlang"
