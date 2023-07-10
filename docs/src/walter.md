@@ -15,11 +15,11 @@ All source files are placed in `src/`.
 
 `src/main.rl` is the main build target.
 
-`walter.yml` should contain a `name` and `version` attribute, within double inverted commas.
+`walter.yml` should contain a `name` and `version` key, which are both strings.
 
 ```redditlang
-name: "<NAME>"
-version: "<SEMVER_VERSION_NUMBER>"
+name: <NAME>
+version: <SEMVER_VERSION_NUMBER>
 ```
 
 Building

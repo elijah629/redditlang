@@ -1,6 +1,8 @@
 # Summary
 
-<!-- - [RedditLang 2023.0.1.7](#redditlang-2023017) -->
+- [Introduction](./introduction.md)
+
+# Specification
 
 - [Document Conventions](./document-conventions.md)
 - [Blocks](./blocks.md)
