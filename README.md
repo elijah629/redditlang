@@ -1,6 +1,4 @@
-# Introduction
-
-<div style="text-align:center">
+<div style="text-align:center" align="center">
     <picture>
         <source srcset="https://github.com/elijah629/redditlang/blob/main/assets/redditLang-light.png?raw=true" media="(prefers-color-scheme: dark)" width="450"/>
         <img src="https://github.com/elijah629/redditlang/blob/main/assets/redditLang-dark.png?raw=true" width="450"/>
@@ -9,7 +7,7 @@
 
 ---
 
-<div style="text-align:center">
+<div style="text-align:center" align="center">
 
 ![GitHub contributors](https://img.shields.io/github/contributors/elijah629/redditlang?style=for-the-badge&logo=github&labelColor=1c2128&color=22272e)
 ![GitHub](https://img.shields.io/github/license/elijah629/redditlang?style=for-the-badge&logo=github&labelColor=1c2128&color=22272e)
