@@ -23,7 +23,7 @@ pub fn compile<'a>(compiler: &Compiler<'a>, tree: &Tree, basic_block: &BasicBloc
 pub fn compile_one<'a>(compiler: &Compiler<'a>, node: &Node, basic_block: &BasicBlock<'a>) {
     match node {
         Node::Loop(r#loop) => r#loop.compile(compiler, basic_block),
-        Node::Break(r#break) => r#break.compile(compiler, basic_block), // Need to fix,                                                   but won't                                          it's hard
+        Node::Break(r#break) => r#break.compile(compiler, basic_block), // Need to fix,                                                   but won't                                          it's hard                                                    but its fixed                                            i  think                                                  not testing bc i will be scared
         Node::Function(_) => todo!(),
         Node::Call(call) => call.compile(compiler, basic_block),
         Node::Throw(_) => todo!(),
