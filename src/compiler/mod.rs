@@ -1,13 +1,12 @@
-use inkwell::{basic_block::BasicBlock, builder::Builder, context::Context, module::Module};
-
+use self::compile_node::Compile;
 use crate::{
     bug,
     parser::{Node, Tree},
 };
-
-use self::compile_node::Compile;
+use inkwell::{basic_block::BasicBlock, builder::Builder, context::Context, module::Module};
 
 pub mod compile_node;
+pub mod linking;
 
 pub struct Compiler<'ctx> {
     pub context: &'ctx Context,
@@ -17,14 +16,14 @@ pub struct Compiler<'ctx> {
 
 pub fn compile<'a>(compiler: &Compiler<'a>, tree: &Tree, basic_block: &BasicBlock<'a>) {
     for node in tree {
-        llvm_one(&compiler, &node, &basic_block);
+        compile_one(&compiler, &node, &basic_block);
     }
 }
 
-pub fn llvm_one<'a>(compiler: &Compiler<'a>, node: &Node, basic_block: &BasicBlock<'a>) {
+pub fn compile_one<'a>(compiler: &Compiler<'a>, node: &Node, basic_block: &BasicBlock<'a>) {
     match node {
         Node::Loop(r#loop) => r#loop.compile(compiler, basic_block),
-        Node::Break(_break) => todo!(), // Need to fix,                                                   but won't
+        Node::Break(r#break) => r#break.compile(compiler, basic_block), // Need to fix,                                                   but won't                                          it's hard
         Node::Function(_) => todo!(),
         Node::Call(call) => call.compile(compiler, basic_block),
         Node::Throw(_) => todo!(),

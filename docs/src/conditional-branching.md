@@ -10,14 +10,14 @@ is <EXPR> {
 }
 ```
 
-The else keyword is `isnt`.
+The else keyword is `isn't`.
 
 Standard form:
 
 ```redditlang
 is <EXPR> {
   # Code
-} isnt {
+} isn't {
   # Code
 }
 ```

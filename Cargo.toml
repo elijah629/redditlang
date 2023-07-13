@@ -7,19 +7,34 @@ repository = "https://github.com/elijah629/redditlang"
 license = "MIT"
 
 [dependencies]
-cc = "1.0.79"
+# cli
 clap = { version = "4.3.10", features = ["derive"] }
-colored = "2.0.4"
-dirs = "5.0.1"
-enquote = "1.1.0"
-git2 = "0.17.2"
+
+# compiling
 inkwell = { version = "0.2.0", features = ["llvm15-0"] }
-llvm-sys = "150.0.7"
+cc = "1.0.79"
+
+# logging
 log = "0.4.19"
+colored = "2.0.4"
+
+# lexing/parsing
 pest = "2.6.1"
 pest_derive = "2.6.1"
+enquote = "1.1.0"
+
+# walter.yml version
+semver = { version = "1.0.17", features = ["serde"] }
+
+# walter.yml serialization
 serde = { version = "1.0.166", features = ["derive"] }
 serde_yaml = "0.9.22"
+
+# walter.yml placement
+dirs = "5.0.1"
+
+# other
+git2 = "0.17.2"
 
 [profile.release]
 lto = true

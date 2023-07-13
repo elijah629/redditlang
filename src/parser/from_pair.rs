@@ -1,10 +1,9 @@
 use crate::errors::syntax_error;
 use crate::parser::{
     parse, parse_one, Assignment, BinaryExpr, BinaryExprTerm, Break, Call, Catch, Class,
-    ConditionExprTerm, ConditionalExpr, ConditionalOperator, Declaration, Else, ElseIf, Expr,
-    Function, FunctionMod, Ident, If, IfBlock, IfNode, Import, Index, IndexExpr, Loop,
-    MathOperator, Module, Node, Number, Return, Term, Throw, Tree, Try, TryCatch, Type, Variable,
-    VariableMod,
+    ConditionExprTerm, ConditionalExpr, ConditionalOperator, Declaration, Else, Expr, Function,
+    FunctionMod, Ident, IfBlock, IfCase, IfNode, Import, Index, IndexExpr, Loop, MathOperator,
+    Module, Node, Number, Return, Term, Throw, Tree, Try, TryCatch, Type, Variable, VariableMod,
 };
 use crate::utils::is_unique;
 use crate::{bug, Rule};
@@ -304,29 +303,23 @@ impl Parse for Tree {
 
 impl Parse for IfBlock {
     fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
-        fn if_node(pair: Pair<'_, Rule>) -> IfNode {
-            let rule = pair.as_rule();
-            let mut inner = pair.into_inner();
-            match rule {
-                Rule::If => IfNode::If(If {
-                    expr: Expr::parse_from(inner.next().unwrap()).unwrap(),
-                    body: Tree::parse_from(inner.next().unwrap()).unwrap(),
-                }),
-                Rule::ElseIf => IfNode::ElseIf(ElseIf {
-                    expr: Expr::parse_from(inner.next().unwrap()).unwrap(),
-                    body: Tree::parse_from(inner.next().unwrap()).unwrap(),
-                }),
-                Rule::Else => IfNode::Else(Else {
-                    body: Tree::parse_from(inner.next().unwrap()).unwrap(),
-                }),
-                _ => bug!("IMPOSSIBLE_ERROR"),
-            }
-        }
-
         let if_nodes: Vec<IfNode> = pair
             .into_inner()
             .map(|x| match x.as_rule() {
-                Rule::If | Rule::ElseIf | Rule::Else => if_node(x),
+                Rule::If | Rule::ElseIf | Rule::Else => {
+                    let rule = x.as_rule();
+                    let mut inner = x.into_inner();
+                    match rule {
+                        Rule::If | Rule::ElseIf => IfNode::Case(IfCase {
+                            expr: Expr::parse_from(inner.next().unwrap()).unwrap(),
+                            body: Tree::parse_from(inner.next().unwrap()).unwrap(),
+                        }),
+                        Rule::Else => IfNode::Else(Else {
+                            body: Tree::parse_from(inner.next().unwrap()).unwrap(),
+                        }),
+                        _ => bug!("IMPOSSIBLE_ERROR"),
+                    }
+                }
                 _ => bug!("INVALID_IFNODE({:?})", x.as_rule()),
             })
             .collect();

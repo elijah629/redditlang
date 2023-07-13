@@ -1,5 +1,8 @@
-use crate::{from_pair::Parse, Rule};
+use crate::Rule;
 
+use self::from_pair::Parse;
+
+pub mod from_pair;
 pub type Number = f64; // Number type
 
 #[derive(Debug)]
@@ -102,19 +105,12 @@ pub struct IfBlock {
 
 #[derive(Debug)]
 pub enum IfNode {
-    If(If),
-    ElseIf(ElseIf),
+    Case(IfCase),
     Else(Else),
 }
 
 #[derive(Debug)]
-pub struct If {
-    pub body: Tree,
-    pub expr: Expr,
-}
-
-#[derive(Debug)]
-pub struct ElseIf {
+pub struct IfCase {
     pub body: Tree,
     pub expr: Expr,
 }

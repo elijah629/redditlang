@@ -45,7 +45,7 @@ Ident       = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 // If, Else If, Else
 IfKwd     = _{ "is" }
 ElseIfKwd = _{ "but" }
-ElseKwd   = _{ "isnt" }
+ElseKwd   = _{ "isn\'t" }
 If        =  { IfKwd ~ Expr ~ Block }
 ElseIf    =  { ElseIfKwd ~ Expr ~ Block }
 Else      =  { ElseKwd ~ Block }

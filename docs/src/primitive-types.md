@@ -20,11 +20,12 @@
 
 ## String
 
-- An array of characters.
+- An array of characters, denoted with two double quotes ( " )
+- You can use escape sequences inside of strings
 
 ## Number
 
-- f64s' or doubles
+- Decimal support
 - Positive by default
 - Doesn't require a `<SIGN>`
 - Standard form:

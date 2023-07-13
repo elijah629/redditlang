@@ -1,11 +1,12 @@
 use std::{fs, path::Path};
 
+use semver::Version;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectConfiguration {
     pub name: String,
-    pub version: String,
+    pub version: Version,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
