@@ -167,10 +167,10 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="walter"><a class="header" href="#walter">Walter</a></h1>
-<p>How to create a new project</p>
+<h2 id="how-to-create-a-new-project"><a class="header" href="#how-to-create-a-new-project">How to create a new project</a></h2>
 <ol>
 <li>Navigate to your project folder in your command line.</li>
-<li>Run <code>walter new &lt;PACKAGE_NAME&gt;</code> to initialize a new project, if you don't specify a name it is created in the current directory with the current directories name if it is empty.</li>
+<li>Run <code>walter rise &lt;PACKAGE_NAME&gt;</code> to initialize a new project, if you don't specify a name it is created in the current directory with the current directories name if it is empty.</li>
 </ol>
 <p>Default project structure</p>
 <ul>
@@ -184,26 +184,43 @@
 <pre><code class="language-redditlang">name: &lt;NAME&gt;
 version: &lt;SEMVER_VERSION_NUMBER&gt;
 </code></pre>
-<p>Building</p>
+<h2 id="cli-documentation"><a class="header" href="#cli-documentation">CLI Documentation</a></h2>
+<p>You can also run <code>walter help &lt;COMMAND&gt;</code> to see info about a specific command, or to see info about the entire program. You can add <code>--help</code> or <code>-h</code> to get help aswell.
+To print the version run <code>walter -V</code> or <code>walter --version</code></p>
+<p>walter <code>&lt;COMMAND&gt;</code></p>
 <ul>
 <li>
-<p>The command to build a project is <code>cook</code>.</p>
-</li>
-<li>
-<p>Standard form:</p>
-<pre><code class="language-redditlang">walter cook
-</code></pre>
-</li>
+<p><code>cook [OPTIONS]</code> <strong>Builds a program</strong></p>
+<p><strong>Options</strong></p>
+<ul>
+<li><code>-r</code>, <code>--release</code> Enables release mode, longer build but more optimizations</li>
+<li><code>-a</code>, <code>--assembly</code> Compiles LLVM to an assembly file instead of an object file before linking</li>
+<li><code>-n</code>, <code>--no-std</code> Does not link the standard library</li>
 </ul>
-<p>Cleaning</p>
-<ul>
-<li>
-<p>The command to remove build directory is <code>clean</code>.</p>
 </li>
 <li>
-<p>Standard form:</p>
-<pre><code class="language-redditlang">walter clean
-</code></pre>
+<p><code>serve [OPTIONS] [ARGS]...</code> <strong>Builds and runs a program</strong></p>
+<p><strong>Arguments</strong></p>
+<ul>
+<li><code>[ARGS]...</code> Optional arguments to pass to the program</li>
+</ul>
+<p><strong>Options</strong></p>
+<ul>
+<li><code>-r</code>, <code>--release</code> Enables release mode, longer build but more optimizations</li>
+<li><code>-a</code>, <code>--assembly</code> Compiles LLVM to an assembly file instead of an object file before linking</li>
+<li><code>-n</code>, <code>--no-std</code> Does not link the standard library</li>
+<li><code>-s</code>, <code>--show-ir</code> Shows the LLVM IR when compiling</li>
+</ul>
+</li>
+<li>
+<p><code>clean</code> <strong>Removes build dir</strong></p>
+</li>
+<li>
+<p><code>rise [NAME]</code> <strong>Creates a new walter project</strong></p>
+<p><strong>Arguments</strong></p>
+<ol>
+<li><code>[NAME]</code> If you don't specify a name it is created in the current directory with the current directories name if it is empty</li>
+</ol>
 </li>
 </ul>
 
