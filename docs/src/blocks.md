@@ -1,8 +1,7 @@
 # Blocks
 
 - Blocks are created by curly braces.
-
-  **Example**
+- Standard form
 
   ```redditlang
   { # This is a block

@@ -4,11 +4,11 @@
 - The loops follow [Rust's syntax](https://doc.rust-lang.org/reference/expressions/loop-expr.html#infinite-loops).
 - The loop keyword is `repeatdatshid`.
 - The break keyword is `sthu`.
-  Standard form:
+- Standard form:
 
   ```redditlang
   repeatdatshid { # Opens a loop
     # Code to execute
-    sthu # Breks the loop
+    sthu # Breaks the loop
   }
   ```
