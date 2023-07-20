@@ -1,26 +1,31 @@
 use inkwell::{
-    basic_block::BasicBlock,
-    values::{BasicMetadataValueEnum, FloatValue, IntValue},
+    values::{
+        ArrayValue, BasicMetadataValueEnum, BasicValueEnum, FloatValue, IntValue, PointerValue,
+    },
     FloatPredicate,
 };
 
 use crate::{
     bug, error,
-    parser::{Break, Call, Expr, IfBlock, Loop, MathOperator, Term},
+    parser::{Break, Call, Expr, IfBlock, Loop, MathOperator, Term, Variable},
 };
 
-use super::{compile, Compiler};
+use super::{compile, CompileMetadata, Compiler};
 
 pub trait Compile<'a> {
-    fn compile(&self, compiler: &Compiler<'a>, basic_block: &BasicBlock<'a>);
+    fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>);
 }
 
 pub trait Compute<'a, T> {
-    fn compute(&self, compiler: &Compiler<'a>) -> Result<T, Box<dyn std::error::Error>>;
+    fn compute(
+        &self,
+        compiler: &Compiler<'a>,
+        compile_meta: &CompileMetadata<'a>,
+    ) -> Result<T, Box<dyn std::error::Error>>;
 }
 
-impl Compile<'_> for Call {
-    fn compile(&self, compiler: &Compiler, _basic_block: &BasicBlock) {
+impl<'a> Compile<'a> for Call {
+    fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) {
         let function = match compiler.module.get_function(self.ident.0.as_str()) {
             Some(x) => x,
             None => error!("Function `{}` not defined", self.ident.0),
@@ -30,10 +35,17 @@ impl Compile<'_> for Call {
             error!("Function `{}` is null or undefined", self.ident.0);
         }
 
-        let args: Vec<BasicMetadataValueEnum> = self
+        let args: Vec<BasicMetadataValueEnum<'_>> = self
             .args
             .iter()
-            .map(|x| x.compute(compiler).unwrap())
+            .map(|x| x.compute(compiler, compile_meta).unwrap())
+            .map(|z| match z {
+                Value::Number(x) => x.into(),
+                Value::Boolean(x) => x.into(),
+                Value::String(x, _) => x.into(),
+                Value::Array(x) => x.into(),
+                Value::Null => todo!(),
+            })
             .collect();
 
         compiler
@@ -43,15 +55,22 @@ impl Compile<'_> for Call {
 }
 
 impl<'a> Compile<'a> for Loop {
-    fn compile(&self, compiler: &Compiler<'a>, start_block: &BasicBlock<'a>) {
-        let function = start_block.get_parent().unwrap();
+    fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) {
+        let function = compile_meta.basic_block.get_parent().unwrap();
         let loop_block = compiler.context.append_basic_block(function, "loop");
         let exit_block = compiler.context.append_basic_block(function, "exit");
 
         compiler.builder.build_unconditional_branch(loop_block);
 
         compiler.builder.position_at_end(loop_block);
-        compile(&compiler, &self.body, &exit_block);
+        compile(
+            &compiler,
+            &self.body,
+            &mut CompileMetadata {
+                basic_block: exit_block,
+                function_scope: compile_meta.function_scope.clone(),
+            },
+        );
 
         // break YES
         if loop_block.get_terminator().is_none() {
@@ -63,14 +82,16 @@ impl<'a> Compile<'a> for Loop {
 }
 
 impl<'a> Compile<'a> for Break {
-    fn compile(&self, compiler: &Compiler, return_block: &BasicBlock) {
-        compiler.builder.build_unconditional_branch(*return_block);
+    fn compile(&self, compiler: &Compiler, compile_meta: &mut CompileMetadata<'_>) {
+        compiler
+            .builder
+            .build_unconditional_branch(compile_meta.basic_block);
         // compiler.builder.position_at_end(*return_block);
     }
 }
 
 impl<'a> Compile<'a> for IfBlock {
-    fn compile(&self, _compiler: &Compiler<'a>, _basic_block: &BasicBlock<'a>) {
+    fn compile(&self, _compiler: &Compiler<'a>, _compile_meta: &mut CompileMetadata<'_>) {
         todo!();
         // let function = basic_block.get_parent().unwrap();
         // let after_block = compiler.context.append_basic_block(function, "if_after");
@@ -132,7 +153,7 @@ impl<'a> Compile<'a> for IfBlock {
     }
 }
 
-fn to_boolean<'a>(compiler: &Compiler<'a>, expr_value: ExprValue<'a>) -> IntValue<'a> {
+fn to_boolean<'a>(compiler: &Compiler<'a>, value: Value<'a>) -> IntValue<'a> {
     let float = |x: FloatValue<'a>| {
         compiler.builder.build_float_compare(
             FloatPredicate::ONE,
@@ -151,38 +172,31 @@ fn to_boolean<'a>(compiler: &Compiler<'a>, expr_value: ExprValue<'a>) -> IntValu
         )
     };
 
-    match expr_value {
-        ExprValue::BinaryExpr(x) => float(x),
-        ExprValue::ConditionalExpr(x) => x, // Should already be a 0 or a 1
-        ExprValue::IndexExpr => todo!(), // Get value and call truthy again ( should be able to do some pointer stuff )
-        ExprValue::Term(x) => match x {
-            BasicMetadataValueEnum::ArrayValue(_) => todo!(),
-            BasicMetadataValueEnum::IntValue(x) => int(x),
-            BasicMetadataValueEnum::FloatValue(x) => float(x),
-            BasicMetadataValueEnum::PointerValue(_) => todo!(),
-            BasicMetadataValueEnum::StructValue(_) => todo!(),
-            BasicMetadataValueEnum::VectorValue(_) => todo!(),
-            BasicMetadataValueEnum::MetadataValue(_) => todo!(),
-        },
-        ExprValue::Null => compiler.context.bool_type().const_zero(),
+    match value {
+        Value::Number(x) => float(x),
+        Value::Boolean(x) => x, // Is already a 0 or a 1
+        Value::Null => compiler.context.bool_type().const_zero(),
+        Value::String(_ptr, len) => int(len),
+        Value::Array(_) => todo!(),
     }
 }
 
 #[derive(Debug)]
-pub enum ExprValue<'a> {
-    BinaryExpr(FloatValue<'a>),
-    /// Bit-width of 1 ( boolean )
-    ConditionalExpr(IntValue<'a>),
-    Term(BasicMetadataValueEnum<'a>),
-    IndexExpr, // TODO
-    Null,      // TODO
+pub enum Value<'a> {
+    Number(FloatValue<'a>),
+    /// Bit-width of 1
+    Boolean(IntValue<'a>),
+    String(PointerValue<'a>, IntValue<'a>), //  ptr, length
+    Array(ArrayValue<'a>),
+    Null,
 }
 
-impl<'a> Compute<'a, ExprValue<'a>> for Expr {
+impl<'a> Compute<'a, Value<'a>> for Expr {
     fn compute(
         &self,
         compiler: &Compiler<'a>,
-    ) -> Result<ExprValue<'a>, Box<dyn std::error::Error>> {
+        compile_meta: &CompileMetadata<'a>,
+    ) -> Result<Value<'a>, Box<dyn std::error::Error>> {
         match self {
             Expr::BinaryExpr(x) => {
                 let mut result = compiler.context.f64_type().const_zero();
@@ -219,33 +233,88 @@ impl<'a> Compute<'a, ExprValue<'a>> for Expr {
                     };
                 }
 
-                Ok(ExprValue::BinaryExpr(result))
+                Ok(Value::Number(result))
             }
             Expr::ConditionalExpr(_) => todo!(),
             Expr::IndexExpr(_) => todo!(),
-            Expr::Term(x) => Ok(ExprValue::Term(x.compute(compiler)?)),
+            Expr::Term(x) => Ok(x.compute(compiler, compile_meta)?),
             Expr::Null => todo!(),
         }
     }
 }
 
-impl<'a> Compute<'a, BasicMetadataValueEnum<'a>> for Term {
+impl<'a> Compute<'a, Value<'a>> for Term {
     fn compute(
         &self,
         compiler: &Compiler<'a>,
-    ) -> Result<BasicMetadataValueEnum<'a>, Box<dyn std::error::Error>> {
+        compile_meta: &CompileMetadata<'a>,
+    ) -> Result<Value<'a>, Box<dyn std::error::Error>> {
         Ok(match self {
-            Term::Number(x) => compiler.context.f64_type().const_float(*x).into(),
-            Term::String(x) => compiler
-                .builder
-                .build_global_string_ptr(x, ".str")
-                .as_pointer_value()
-                .into(),
-            Term::Ident(_) => {
-                // TODO: Variables, somehow
-                // compiler.builder
-                todo!()
+            Term::Number(x) => Value::Number(compiler.context.f64_type().const_float(*x)),
+            Term::String(x) => Value::String(
+                compiler
+                    .builder
+                    .build_global_string_ptr(x, ".str")
+                    .as_pointer_value(),
+                compiler.context.i64_type().const_int(x.len() as u64, false),
+            ),
+            Term::Ident(x) => {
+                let ptr = compile_meta.function_scope.variables.get(&x.0).unwrap();
+
+                let loaded = compiler.builder.build_load(
+                    ptr.get_type(),
+                    *ptr,
+                    format!("{}_access", x.0).as_str(),
+                );
+
+                match loaded {
+                    BasicValueEnum::FloatValue(x) => Value::Number(x),
+                    BasicValueEnum::IntValue(x) => Value::Boolean(x),
+                    BasicValueEnum::PointerValue(x) => {
+                        Value::String(x, compiler.context.i64_type().const_int(3, false))
+                    }
+                    BasicValueEnum::ArrayValue(x) => Value::Array(x),
+                    _ => bug!("UNKNOWN_VAR_TYPE({:?})", loaded),
+                }
             }
         })
+    }
+}
+
+impl<'a> Compile<'a> for Variable {
+    fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) {
+        let value = self.value.compute(compiler, compile_meta).unwrap();
+        match value {
+            Value::Number(x) => {
+                let alloca = compiler
+                    .builder
+                    .build_alloca(x.get_type(), self.declaration.ident.0.as_str());
+                compiler.builder.build_store(alloca, x);
+            }
+            Value::Boolean(x) => {
+                let alloca = compiler
+                    .builder
+                    .build_alloca(x.get_type(), self.declaration.ident.0.as_str());
+                compiler.builder.build_store(alloca, x);
+            }
+            Value::String(x, _) => {
+                let ident = &self.declaration.ident.0;
+
+                let alloca = compiler.builder.build_alloca(x.get_type(), &ident);
+                compiler.builder.build_store(alloca, x);
+
+                compile_meta
+                    .function_scope
+                    .variables
+                    .insert(ident.to_string(), alloca); // allows shadowing
+            }
+            Value::Array(x) => {
+                let alloca = compiler
+                    .builder
+                    .build_alloca(x.get_type(), self.declaration.ident.0.as_str());
+                compiler.builder.build_store(alloca, x);
+            }
+            Value::Null => todo!(), // TODO: Nullptr
+        }
     }
 }
