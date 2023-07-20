@@ -328,6 +328,7 @@ statement_five; statement_six # This is also invalid.
 <p>Standard form:</p>
 <pre><code class="language-redditlang">meth &lt;IDENT&gt; ∑ &lt;EXPR&gt;
 </code></pre>
+<p>Variables are scope-local and shadow previous variables with the same name.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="typing"><a class="header" href="#typing">Typing</a></h1>
 <p>Typing a variable or a function type is optional, they act as comments and are only static and runtime errors.</p>
 <p>Array access</p>
@@ -380,7 +381,7 @@ Standard form:</p>
   # Code
 } but &lt;EXPR&gt; {
   # Code
-} isnt {
+} isn't {
   # Code
 }
 </code></pre>
