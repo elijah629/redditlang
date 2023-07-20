@@ -11,3 +11,5 @@ Standard form:
 ```redditlang
 meth <IDENT> ∑ <EXPR>
 ```
+
+Variables are scope-local and shadow previous variables with the same name.

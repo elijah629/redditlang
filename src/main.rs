@@ -2,7 +2,7 @@ use crate::{
     compiler::{
         compile,
         linking::{build_libstd, define_libstd, link},
-        Compiler,
+        CompileMetadata, Compiler, Scope,
     },
     errors::syntax_error,
     project::ProjectConfiguration,
@@ -21,6 +21,7 @@ use pest_derive::Parser as PestParser;
 use project::Project;
 use semver::Version;
 use std::{
+    collections::HashMap,
     env, fs,
     hash::Hash,
     path::{Path, PathBuf},
@@ -229,7 +230,16 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool) -> PathBuf {
         compiler.builder.position_at_end(entry_basic_block);
         entry_basic_block
     };
-    compile(&compiler, &tree, &entry_basic_block);
+    compile(
+        &compiler,
+        &tree,
+        &mut CompileMetadata {
+            basic_block: entry_basic_block,
+            function_scope: Scope {
+                variables: HashMap::new(),
+            },
+        },
+    );
 
     // Add return
     compiler

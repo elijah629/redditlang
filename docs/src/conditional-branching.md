@@ -31,7 +31,7 @@ is <EXPR> {
   # Code
 } but <EXPR> {
   # Code
-} isnt {
+} isn't {
   # Code
 }
 ```
