@@ -111,10 +111,11 @@ LessThanOrEqual    = { "⋜" }
 // Math
 Add      = { "⨋" }
 /// Not U+2012 (figure dash) but U+2013 (en dash)
-Subtract = { "–" }
-Multiply = { "⋇" }
-Divide   = { "⎲" }
+Subtract = { "–"  }
+Multiply = { "⋇"  }
+Divide   = { "⎲"  }
 XOR      = { "⊕" }
+Modulus  = { "⨊"  }
 
 // Other
 Assignment = _{ "∑" }
@@ -122,7 +123,7 @@ Negation   =  { "¡" }
 
 UnaryOperator       = { Add | Subtract | Negation }
 ConditionalOperator = { Equality | Inequality | GreaterThan | GreaterThanOrEqual | LessThan | LessThanOrEqual }
-MathOperator        = { Add | Subtract | Multiply | Divide | XOR }
+MathOperator        = { Add | Subtract | Multiply | Divide | XOR | Modulus }
 
 // Class
 ClassKwd = _{ "school " }

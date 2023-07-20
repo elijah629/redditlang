@@ -230,6 +230,9 @@ impl<'a> Compute<'a, Value<'a>> for Expr {
                                 .const_xor(operand_flt)
                                 .const_signed_to_float(compiler.context.f64_type())
                         }
+                        MathOperator::Modulus => compiler
+                            .builder
+                            .build_float_rem(result, operand, "expr_mod"),
                     };
                 }
 

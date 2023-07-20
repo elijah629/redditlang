@@ -139,6 +139,7 @@ pub enum MathOperator {
     Multiply,
     Divide,
     XOR,
+    Modulus,
 }
 
 #[derive(Debug)]

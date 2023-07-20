@@ -231,6 +231,7 @@ impl Parse for BinaryExpr {
                             Rule::Multiply => MathOperator::Multiply,
                             Rule::Divide => MathOperator::Divide,
                             Rule::XOR => MathOperator::XOR,
+                            Rule::Modulus => MathOperator::Modulus,
                             _ => bug!("UNKNOWN_OPERATOR({:?})", x.as_rule()),
                         });
                     let operand = Term::parse_from(x.last().unwrap().clone()).unwrap();
