@@ -39,15 +39,15 @@ A name within chevrons (`< >`) refers to one of these:
 A name within chevrons (`< >`), and suffixed by horizontal ellipses (`...`) refers to the below:
 
 - `<IDENT...>`
-  An arbitrary number of arguments is allowed, based on requirements.
+  An arbitrary ( at least one ) number of `IDENT` is allowed, based on requirements.
 
 A token suffixed by a question mark (`?`) refers to the below:
 
 - `<IDENT>?`
-  An argument is optional.
+  An `IDENT` is optional.
 
 - `<IDENT...>?`
-  An arbitrary number of arguments is allowed, including 0.
+  An arbitrary number of `IDENT` is allowed, including 0.
 
 - `(<IDENT...>)?`
   Parantheses and everything within are optional.

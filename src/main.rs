@@ -20,6 +20,7 @@ use pest::Parser as PestParser;
 use pest_derive::Parser as PestParser;
 use project::Project;
 use semver::Version;
+use utils::Result;
 use std::{
     collections::HashMap,
     env, fs,
@@ -66,6 +67,10 @@ enum Commands {
         /// Shows the LLVM IR when compiling
         #[arg(short, long)]
         show_ir: bool,
+
+        /// Shows the AST when parsing
+        #[arg(short = 't', long)]
+        show_ast: bool,
     },
     /// Builds and runs program
     Serve {
@@ -84,6 +89,10 @@ enum Commands {
         /// Shows the LLVM IR when compiling
         #[arg(short, long)]
         show_ir: bool,
+
+        /// Shows the AST when parsing
+        #[arg(short = 't', long)]
+        show_ast: bool,
 
         /// Optional arguments to pass to the program.
         args: Option<Vec<String>>,
@@ -116,8 +125,9 @@ fn main() {
             assembly,
             no_std,
             show_ir,
+            show_ast,
         } => {
-            let output_file = cook(release, assembly, no_std, show_ir);
+            let output_file = cook(release, assembly, no_std, show_ir, show_ast);
             log::info!(
                 "Done! Executable is avalible at {}",
                 output_file.to_str().unwrap().bold()
@@ -168,9 +178,10 @@ fn main() {
             no_std,
             show_ir,
             args,
+            show_ast,
         } => {
-            let output_file = cook(release, assembly, no_std, show_ir);
-            log::info!("Running {}\n", output_file.to_str().unwrap().bold());
+            let output_file = cook(release, assembly, no_std, show_ir, show_ast);
+            log::info!("Running {}", output_file.to_str().unwrap().bold());
 
             let mut command = Command::new(output_file);
             if let Some(args) = args {
@@ -182,14 +193,14 @@ fn main() {
     }
 }
 
-fn parse_file(file: &str) -> Tree {
+fn parse_file(file: &str) -> Result<Tree> {
     match RLParser::parse(Rule::Program, file) {
         Ok(x) => parse(x),
         Err(x) => syntax_error(x),
     }
 }
 
-fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool) -> PathBuf {
+fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool, show_ast: bool) -> PathBuf {
     let project = get_current_project();
     let std_path = build_libstd().unwrap_or_else(|x| error!("Error building libstd: {:?}", x));
 
@@ -205,7 +216,11 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool) -> PathBuf {
 
     log::info!("Lexing/Parsing");
 
-    let tree = parse_file(&main_file);
+    let tree = parse_file(&main_file).unwrap();
+
+    if show_ast {
+        println!("{:#?}", tree);
+    }
 
     log::info!("Compiling");
 
@@ -230,6 +245,7 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool) -> PathBuf {
         compiler.builder.position_at_end(entry_basic_block);
         entry_basic_block
     };
+
     compile(
         &compiler,
         &tree,
@@ -275,7 +291,7 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool) -> PathBuf {
     let object_path = &build_dir.join(format!(
         "{}.reddit.{}",
         project.config.name,
-        if assembly { "s" } else { "o" }
+        if assembly { "s" } else { "o" } // "s" being asm, could do .asm but whatever
     ));
 
     let target = Target::from_name("x86-64").unwrap();

@@ -12,23 +12,23 @@ clap = { version = "4.3.10", features = ["derive"] }
 
 # compiling
 inkwell = { version = "0.2.0", features = ["llvm15-0"] }
-cc = "1.0.79"
+cc = "1.0.82"
 
 # logging
-log = "0.4.19"
+log = "0.4.20"
 colored = "2.0.4"
 
 # lexing/parsing
-pest = "2.6.1"
-pest_derive = "2.6.1"
+pest = "2.7.2"
+pest_derive = "2.7.2"
 enquote = "1.1.0"
 
 # walter.yml version
-semver = { version = "1.0.17", features = ["serde"] }
+semver = { version = "1.0.18", features = ["serde"] }
 
 # walter.yml serialization
-serde = { version = "1.0.166", features = ["derive"] }
-serde_yaml = "0.9.22"
+serde = { version = "1.0.183", features = ["derive"] }
+serde_yaml = "0.9.25"
 
 # walter.yml placement
 dirs = "5.0.1"

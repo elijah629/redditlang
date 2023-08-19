@@ -1,14 +1,15 @@
 # Functions
 
-Function Declaration
+## Function Declaration
 
 - The declare keyword is `callmeonmycellphone`.
 - Functions have an identifier, and a return type.
 - They can optionally include a modifier and an arbitrary number of arguments.
+- **All** arguments, last one or not, will end with a comma.
 - Standard form:
 
   ```redditlang
-  <FUNCTION_MOD...> callmeonmycellphone <DECLARATION>(<DECLARATION...>?) {
+  <FUNCTION_MOD...> callmeonmycellphone <DECLARATION>(<DECLARATION,...>) {
     # Block
   }
   ```
@@ -20,18 +21,17 @@ Function Declaration
 - Arguments
   - Arguments are separated by commas.
 
-Function Calls
+## Function Calls
 
+- **All** arguments, last one or not, will end with a comma.
 - The call keyword is `call`.
 - Standard form:
 
   ```redditlang
-  call <IDENT>(<EXPR...>?)
+  call <IDENT>(<EXPR,...>?)
   ```
 
-  where `(<EXPR...>?)` is a comma separated list of expressions.
-
-Function returns
+## Function returns
 
 - The return keyword is `spez`.
 - Standard form:

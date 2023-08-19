@@ -1,11 +1,29 @@
 # Typing
 
-Typing a variable or a function type is optional, they act as comments and are only static and runtime errors.
+Typing a variable or a function type is not optional.
 
-Array access
+## Arrays
+
+To type array's, you use the generic `T >> Array` type 
 
 - Standard form:
 
   ```redditlang
-  <TYPE>[]
+  <TYPE> >> Array
   ```
+
+## Flat types
+
+- Standard form:
+
+    ```redditlang
+    <TYPE>
+    ```
+
+## Generics
+
+- Standard form:
+
+    ```redditlang
+    (<TYPE,...>) >> <TYPE>
+    ```

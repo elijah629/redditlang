@@ -5,32 +5,60 @@ use crate::parser::{
     FunctionMod, Ident, IfBlock, IfCase, IfNode, Import, Index, IndexExpr, Loop, MathOperator,
     Module, Node, Number, Return, Term, Throw, Tree, Try, TryCatch, Type, Variable, VariableMod,
 };
-use crate::utils::is_unique;
+use crate::utils::{is_unique, Result};
 use crate::{bug, Rule};
 use pest::error::Error;
 use pest::iterators::Pair;
 
 pub trait Parse {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self>
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self>
     where
         Self: Sized;
 }
 
-impl Parse for Declaration {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+impl Parse for Type {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
-        let ident = Ident::parse_from(inner.next().unwrap()).unwrap();
-        let r#type = inner.next().map(|x| x.into_inner()).map(|mut x| Type {
-            ident: Ident::parse_from(x.next().unwrap()).unwrap(),
-            is_array: x.next().is_some(),
-        });
 
-        Some(Self { ident, r#type })
+       // let inner_vec = inner.collect::<Vec<_>>();
+        let len = inner.len() - 1;
+       let generics = inner.clone().take(len).map(|x| {
+            match x.as_rule() {
+               Rule::Ident => {
+                   Type {
+                       generics: vec![],
+                       root_type: Ident::parse_from(x).unwrap()
+                   } 
+               },
+               Rule::Type => {
+                  Type::parse_from(x).unwrap()
+               }
+               _ => bug!("UNEXPECTED_TYPE_RULE({})", x) 
+            }
+        }).collect::<Vec<_>>();
+
+       let root_type = Ident::parse_from(inner.next().unwrap())?;
+
+       Ok(Self {
+           generics,
+           root_type
+       })
+    }
+}
+
+impl Parse for Declaration {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
+        let mut inner = pair.into_inner(); 
+        let ident = Ident::parse_from(inner.next().unwrap())?; 
+
+        let r#type = Type::parse_from(inner.next().unwrap())?;
+        
+        Ok(Self { ident, r#type })
     }
 }
 
 impl Parse for Function {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let start_pos = pair.as_span().start_pos();
         let mut inner = pair.into_inner();
         let modifiers: Vec<FunctionMod> = inner
@@ -69,7 +97,7 @@ impl Parse for Function {
             ))
         }
         let body = Tree::parse_from(inner.next().unwrap()).unwrap();
-        Some(Self {
+        Ok(Self {
             modifiers,
             declaration,
             args,
@@ -79,12 +107,11 @@ impl Parse for Function {
 }
 
 impl Parse for Term {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         match pair.as_rule() {
-            Rule::String => Some(Self::String(
+            Rule::String => Ok(Self::String(
                 enquote::unquote(pair.as_str()).unwrap().to_string(),
             )),
-            Rule::UNumber => None,
             Rule::Number => {
                 let mut inner = pair.into_inner();
                 let has_sign = inner.len() == 2;
@@ -99,90 +126,90 @@ impl Parse for Term {
 
                 let magnitude: Number = inner.next().unwrap().as_str().parse().unwrap();
                 let value = if is_negative { -magnitude } else { magnitude };
-                Some(Self::Number(value))
+                Ok(Self::Number(value))
             }
-            Rule::Ident => Some(Self::Ident(Ident::parse_from(pair).unwrap())),
-            Rule::Expr => None, // TODO: Expr in parenthases
-            _ => None,
+            Rule::Ident => Ok(Self::Ident(Ident::parse_from(pair).unwrap())),
+            Rule::Expr => todo!(), // TODO: Wrapped Expr Expr(Expr)
+            _ => Err("INVALID_RULE".into()),
         }
     }
 }
 
 impl Parse for Module {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
         let ident = Ident::parse_from(inner.next().unwrap()).unwrap();
-        Some(Self { ident })
+        Ok(Self { ident })
     }
 }
 
 impl Parse for Call {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
         let ident = Ident::parse_from(inner.next().unwrap()).unwrap();
         let args = inner
             .next()
             .unwrap()
             .into_inner()
-            .map(|x| Term::parse_from(x.into_inner().next().unwrap()).unwrap())
+            .map(|x| Expr::parse_from(x).unwrap())
             .collect();
-        Some(Self { ident, args })
+        Ok(Self { ident, args })
     }
 }
 
 impl Parse for Break {
-    fn parse_from(_pair: Pair<'_, Rule>) -> Option<Self> {
-        Some(Break)
+    fn parse_from(_pair: Pair<'_, Rule>) -> Result<Self> {
+        Ok(Break)
     }
 }
 
 impl Parse for Throw {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
-        let value = Expr::parse_from(inner.next().unwrap()).unwrap();
-        Some(Self { value })
+        let value = Expr::parse_from(inner.next().unwrap())?;
+        Ok(Self { value })
     }
 }
 
 impl Parse for Import {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
-        let path = Term::parse_from(inner.next().unwrap()).unwrap();
-        Some(Self { path })
+        let path = Term::parse_from(inner.next().unwrap())?;
+        Ok(Self { path })
     }
 }
 
 impl Parse for Loop {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
-        Some(Self {
-            body: Tree::parse_from(inner.next().unwrap()).unwrap(),
+        Ok(Self {
+            body: Tree::parse_from(inner.next().unwrap())?,
         })
     }
 }
 
 impl Parse for TryCatch {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
 
-        let r#try = Try(Tree::parse_from(inner.next().unwrap()).unwrap());
+        let r#try = Try(Tree::parse_from(inner.next().unwrap())?);
         let mut catch = inner.next().unwrap().into_inner();
 
         let first = catch.next().unwrap();
         let catch = match first.as_rule() {
-            Rule::Block => Catch(None, Tree::parse_from(first).unwrap()),
+            Rule::Block => Catch(None, Tree::parse_from(first)?),
             Rule::Ident => Catch(
-                Ident::parse_from(first),
-                Tree::parse_from(catch.next().unwrap()).unwrap(),
+                Ident::parse_from(first).ok(),
+                Tree::parse_from(catch.next().unwrap())?,
             ),
             _ => bug!("CATCH_NOT_BLOCK_OR_IDENT({:?})", first.as_rule()),
         };
-        Some(TryCatch { r#try, catch })
+        Ok(TryCatch { r#try, catch })
     }
 }
 
 impl Parse for Variable {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let start_pos = pair.as_span().start_pos();
         let mut inner = pair.into_inner();
         let modifiers: Vec<VariableMod> = inner
@@ -197,13 +224,13 @@ impl Parse for Variable {
                         message: "Invalid modifier".to_owned(),
                     },
                     start_pos,
-                )),
+                    )),
             })
             .collect();
-        let declaration = Declaration::parse_from(inner.next().unwrap()).unwrap();
-        let value = Expr::parse_from(inner.next().unwrap()).unwrap();
+        let declaration = Declaration::parse_from(inner.next().unwrap())?;
+        let value = Expr::parse_from(inner.next().unwrap())?;
 
-        Some(Self {
+        Ok(Self {
             modifiers,
             declaration,
             value,
@@ -212,14 +239,14 @@ impl Parse for Variable {
 }
 
 impl Parse for BinaryExpr {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut pairs = pair.into_inner().collect::<Vec<_>>();
         let first = &[pairs.remove(0)];
 
         let mut pairs = pairs.chunks(2).collect::<Vec<_>>();
         pairs.insert(0, first);
 
-        Some(BinaryExpr {
+        Ok(BinaryExpr {
             terms: pairs
                 .into_iter()
                 .map(|x| {
@@ -243,8 +270,8 @@ impl Parse for BinaryExpr {
 }
 
 impl Parse for ConditionalExpr {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
-        Some(Self {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
+        Ok(Self {
             terms: pair
                 .into_inner()
                 .collect::<Vec<_>>()
@@ -252,7 +279,7 @@ impl Parse for ConditionalExpr {
                 .map(|x| ConditionExprTerm {
                     operand: Term::parse_from((x[0]).clone()).unwrap(),
                     operator: x.get(1).and_then(|x| {
-                        let rule = x.clone().into_inner().next().unwrap().as_rule();
+                        let rule = x.clone().into_inner().next()?.as_rule();
                         match rule {
                             Rule::Equality => Some(ConditionalOperator::Equality),
                             Rule::Inequality => Some(ConditionalOperator::AntiEquality),
@@ -266,26 +293,26 @@ impl Parse for ConditionalExpr {
 }
 
 impl Parse for Assignment {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
-        let ident = Ident::parse_from(inner.next().unwrap()).unwrap();
-        let value = Expr::parse_from(inner.next().unwrap()).unwrap();
-        Some(Self { ident, value })
+        let ident = Ident::parse_from(inner.next().unwrap())?;
+        let value = Expr::parse_from(inner.next().unwrap())?;
+        Ok(Self { ident, value })
     }
 }
 
 impl Parse for Ident {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
-        Some(Self(pair.as_str().to_string()))
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
+        Ok(Self(pair.as_str().to_string()))
     }
 }
 
 impl Parse for Expr {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let start_pos = pair.as_span().start_pos();
         let value = parse_one(pair).expect("Invalid expression");
         match value {
-            Node::Expr(x) => Some(x),
+            Node::Expr(x) => Ok(x),
             _ => syntax_error(Error::new_from_pos(
                 pest::error::ErrorVariant::CustomError {
                     message: "Value is not an expression".to_owned(),
@@ -297,13 +324,13 @@ impl Parse for Expr {
 }
 
 impl Parse for Tree {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
-        Some(parse(pair.into_inner()))
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
+        parse(pair.into_inner())
     }
 }
 
 impl Parse for IfBlock {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let if_nodes: Vec<IfNode> = pair
             .into_inner()
             .map(|x| match x.as_rule() {
@@ -318,47 +345,47 @@ impl Parse for IfBlock {
                         Rule::Else => IfNode::Else(Else {
                             body: Tree::parse_from(inner.next().unwrap()).unwrap(),
                         }),
-                        _ => bug!("IMPOSSIBLE_ERROR"),
+                        _ => unreachable!()
                     }
                 }
                 _ => bug!("INVALID_IFNODE({:?})", x.as_rule()),
             })
             .collect();
 
-        Some(Self { if_nodes })
+        Ok(Self { if_nodes })
     }
 }
 
 impl Parse for Return {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
-        let value = Expr::parse_from(inner.next().unwrap()).unwrap();
-        Some(Self { value })
+        let value = Expr::parse_from(inner.next().unwrap())?;
+        Ok(Self { value })
     }
 }
 
 impl Parse for Class {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
 
-        let ident = Ident::parse_from(inner.next().unwrap()).unwrap();
-        let body = Tree::parse_from(inner.next().unwrap()).unwrap();
+        let ident = Ident::parse_from(inner.next().unwrap())?;
+        let body = Tree::parse_from(inner.next().unwrap())?;
 
-        Some(Self { ident, body })
+        Ok(Self { ident, body })
     }
 }
 
 impl Parse for IndexExpr {
-    fn parse_from(pair: Pair<'_, Rule>) -> Option<Self> {
+    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
 
-        let term = Term::parse_from(inner.next().unwrap()).unwrap();
-        let index = Term::parse_from(inner.next().unwrap()).unwrap();
+        let term = Term::parse_from(inner.next().unwrap())?;
+        let index = Term::parse_from(inner.next().unwrap())?;
         let index = match index {
             Term::Number(x) => Index::Number(x),
             Term::String(x) => Index::String(x),
             _ => bug!("INVALID_INDEX_TERM({:?})", index),
         };
-        Some(Self { term, index })
+        Ok(Self { term, index })
     }
 }

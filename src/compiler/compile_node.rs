@@ -1,13 +1,14 @@
+use colored::Colorize;
 use inkwell::{
     values::{
         ArrayValue, BasicMetadataValueEnum, BasicValueEnum, FloatValue, IntValue, PointerValue,
     },
-    FloatPredicate,
+    /*FloatPredicate, IntPredicate,*/
 };
 
 use crate::{
     bug, error,
-    parser::{Break, Call, Expr, IfBlock, Loop, MathOperator, Term, Variable},
+    parser::{Assignment, Break, Call, Expr, IfBlock, Loop, MathOperator, Term, Variable},
 };
 
 use super::{compile, CompileMetadata, Compiler};
@@ -26,10 +27,10 @@ pub trait Compute<'a, T> {
 
 impl<'a> Compile<'a> for Call {
     fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) {
-        let function = match compiler.module.get_function(self.ident.0.as_str()) {
-            Some(x) => x,
-            None => error!("Function `{}` not defined", self.ident.0),
-        };
+        let function = compiler
+            .module
+            .get_function(self.ident.0.as_str())
+            .unwrap_or_else(|| error!("Use of undefined function `{}`", self.ident.0));
 
         if function.is_null() || function.is_undef() {
             error!("Function `{}` is null or undefined", self.ident.0);
@@ -50,7 +51,7 @@ impl<'a> Compile<'a> for Call {
 
         compiler
             .builder
-            .build_call(function, args.as_slice(), "call");
+            .build_call(function, args.as_slice(), "return");
     }
 }
 
@@ -72,7 +73,7 @@ impl<'a> Compile<'a> for Loop {
             },
         );
 
-        // break YES
+        // break, edit: no this does not fucking work. whuyyuyuyuyyyyyyyyyyyyyyyyy
         if loop_block.get_terminator().is_none() {
             compiler.builder.build_unconditional_branch(loop_block);
         }
@@ -138,7 +139,7 @@ impl<'a> Compile<'a> for IfBlock {
         //             None
         //         }
         //     })
-        //     .filter(|x| x.is_some())
+        //     .filter(|x| x.is_some()) // collect on results can go to Result<Vec<_>>!!!! FIX THIS
         //     .map(|x| x.unwrap())
         //     .collect::<Vec<_>>();
 
@@ -153,7 +154,7 @@ impl<'a> Compile<'a> for IfBlock {
     }
 }
 
-fn to_boolean<'a>(compiler: &Compiler<'a>, value: Value<'a>) -> IntValue<'a> {
+/*fn to_boolean<'a>(compiler: &Compiler<'a>, value: Value<'a>) -> IntValue<'a> {
     let float = |x: FloatValue<'a>| {
         compiler.builder.build_float_compare(
             FloatPredicate::ONE,
@@ -165,7 +166,7 @@ fn to_boolean<'a>(compiler: &Compiler<'a>, value: Value<'a>) -> IntValue<'a> {
 
     let int = |x: IntValue<'a>| {
         compiler.builder.build_int_compare(
-            inkwell::IntPredicate::NE,
+            IntPredicate::NE,
             x,
             x.get_type().const_zero(),
             "expr_truthy",
@@ -179,7 +180,7 @@ fn to_boolean<'a>(compiler: &Compiler<'a>, value: Value<'a>) -> IntValue<'a> {
         Value::String(_ptr, len) => int(len),
         Value::Array(_) => todo!(),
     }
-}
+}*/
 
 #[derive(Debug)]
 pub enum Value<'a> {
@@ -241,7 +242,8 @@ impl<'a> Compute<'a, Value<'a>> for Expr {
             Expr::ConditionalExpr(_) => todo!(),
             Expr::IndexExpr(_) => todo!(),
             Expr::Term(x) => Ok(x.compute(compiler, compile_meta)?),
-            Expr::Null => todo!(),
+            Expr::Null => Ok(Value::Null),
+            Expr::CallExpr(_x) => todo!(),
         }
     }
 }
@@ -262,7 +264,11 @@ impl<'a> Compute<'a, Value<'a>> for Term {
                 compiler.context.i64_type().const_int(x.len() as u64, false),
             ),
             Term::Ident(x) => {
-                let ptr = compile_meta.function_scope.variables.get(&x.0).unwrap();
+                let ptr = compile_meta
+                    .function_scope
+                    .variables
+                    .get(&x.0)
+                    .unwrap_or_else(|| error!("Use of undefined variable {}", &x.0.bold()));
 
                 let loaded = compiler.builder.build_load(
                     ptr.get_type(),
@@ -287,37 +293,60 @@ impl<'a> Compute<'a, Value<'a>> for Term {
 impl<'a> Compile<'a> for Variable {
     fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) {
         let value = self.value.compute(compiler, compile_meta).unwrap();
+
+        fn var<'a>(
+            x: BasicValueEnum<'a>,
+            ident: &String,
+            compiler: &Compiler<'a>,
+            compile_meta: &mut CompileMetadata<'a>,
+        ) {
+            let alloca = compiler.builder.build_alloca(x.get_type(), &ident);
+            compiler.builder.build_store(alloca, x);
+
+            compile_meta
+                .function_scope
+                .variables
+                .insert(ident.to_string(), alloca); // allows shadowing
+        }
+
+        let ident = &self.declaration.ident.0;
+
         match value {
+            Value::Number(x) => var(x.into(), ident, &compiler, compile_meta),
+            Value::Boolean(x) => var(x.into(), ident, &compiler, compile_meta),
+            Value::String(x, _) => var(x.into(), ident, &compiler, compile_meta),
+            Value::Array(x) => var(x.into(), ident, &compiler, compile_meta),
+            Value::Null => todo!(),
+        }
+    }
+}
+
+impl<'a> Compile<'a> for Assignment {
+    fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) {
+        let ptr = *compile_meta
+            .function_scope
+            .variables
+            .get(&self.ident.0)
+            .unwrap_or_else(|| error!("Assignment to undefined variable {}", &self.ident.0.bold()));
+
+        match self.value.compute(compiler, compile_meta).unwrap() {
             Value::Number(x) => {
-                let alloca = compiler
-                    .builder
-                    .build_alloca(x.get_type(), self.declaration.ident.0.as_str());
-                compiler.builder.build_store(alloca, x);
+                compiler.builder.build_store(ptr, x);
             }
             Value::Boolean(x) => {
-                let alloca = compiler
-                    .builder
-                    .build_alloca(x.get_type(), self.declaration.ident.0.as_str());
-                compiler.builder.build_store(alloca, x);
+                compiler.builder.build_store(ptr, x);
             }
             Value::String(x, _) => {
-                let ident = &self.declaration.ident.0;
-
-                let alloca = compiler.builder.build_alloca(x.get_type(), &ident);
-                compiler.builder.build_store(alloca, x);
-
-                compile_meta
-                    .function_scope
-                    .variables
-                    .insert(ident.to_string(), alloca); // allows shadowing
+                compiler.builder.build_store(ptr, x);
             }
             Value::Array(x) => {
-                let alloca = compiler
-                    .builder
-                    .build_alloca(x.get_type(), self.declaration.ident.0.as_str());
-                compiler.builder.build_store(alloca, x);
+                compiler.builder.build_store(ptr, x);
             }
-            Value::Null => todo!(), // TODO: Nullptr
+            Value::Null => {
+                compiler
+                    .builder
+                    .build_store(ptr, ptr.get_type().const_null());
+            }
         }
     }
 }

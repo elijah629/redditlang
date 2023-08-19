@@ -31,7 +31,9 @@ pub struct CompileMetadata<'a> {
 
 pub fn compile<'a>(compiler: &Compiler<'a>, tree: &Tree, compile_meta: &mut CompileMetadata<'a>) {
     for node in tree {
-        compile_one(&compiler, &node, compile_meta);
+        if !matches!(node, Node::EOI) {
+           compile_one(&compiler, &node, compile_meta);
+        }
     }
 }
 
@@ -49,11 +51,12 @@ pub fn compile_one<'a>(
         Node::Import(_) => todo!(),
         Node::Module(_) => todo!(),
         Node::TryCatch(_) => todo!(),
-        Node::Variable(var) => var.compile(compiler, compile_meta),
-        Node::Assignment(_) => todo!(),
+        Node::Variable(variable) => variable.compile(compiler, compile_meta),
+        Node::Assignment(assignment) => assignment.compile(compiler, compile_meta),
         Node::If(r#if) => r#if.compile(compiler, compile_meta),
         Node::Class(_) => todo!(),
         Node::Return(_) => todo!(),
         Node::Expr(_) => bug!("EXPR_IS_STATEMENT_COMPILER"),
+        Node::EOI => unreachable!() // EOI will never get here
     }
 }
