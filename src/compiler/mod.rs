@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use self::compile_node::Compile;
+use self::compile_node::{Compile, ValidType};
 use crate::{
     bug,
-    parser::{Node, Tree},
+    parser::{Node, Tree, Type}, utils::Result,
 };
 use inkwell::{
     basic_block::BasicBlock, builder::Builder, context::Context, module::Module,
@@ -19,9 +19,15 @@ pub struct Compiler<'ctx> {
     pub module: Module<'ctx>,
 }
 
-#[derive(Clone)]
+//#[derive(Clone)]
+pub struct ScopeVariable<'a> {
+    pub ptr: PointerValue<'a>,
+    pub r#type: ValidType
+}
+
+//#[derive(Clone)]
 pub struct Scope<'a> {
-    pub variables: HashMap<String, PointerValue<'a>>,
+    pub variables: HashMap<String, ScopeVariable<'a>>,
 }
 
 pub struct CompileMetadata<'a> {
@@ -29,34 +35,35 @@ pub struct CompileMetadata<'a> {
     pub function_scope: Scope<'a>,
 }
 
-pub fn compile<'a>(compiler: &Compiler<'a>, tree: &Tree, compile_meta: &mut CompileMetadata<'a>) {
+pub fn compile<'a>(compiler: &Compiler<'a>, tree: &Tree, compile_meta: &mut CompileMetadata<'a>) -> Result<()> {
     for node in tree {
         if !matches!(node, Node::EOI) {
-           compile_one(&compiler, &node, compile_meta);
+           compile_one(&compiler, &node, compile_meta)?;
         }
     }
+    Ok(())
 }
 
 pub fn compile_one<'a>(
     compiler: &Compiler<'a>,
     node: &Node,
     compile_meta: &mut CompileMetadata<'a>,
-) {
+) -> Result<()> {
     match node {
-        Node::Loop(r#loop) => r#loop.compile(compiler, compile_meta),
-        Node::Break(r#break) => r#break.compile(compiler, compile_meta),
+        Node::Loop(r#loop) => todo!(),
+        Node::Break(r#break) => todo!(),
         Node::Function(_) => todo!(),
-        Node::Call(call) => call.compile(compiler, compile_meta),
+        Node::Call(call) => todo!(),
         Node::Throw(_) => todo!(),
         Node::Import(_) => todo!(),
         Node::Module(_) => todo!(),
         Node::TryCatch(_) => todo!(),
         Node::Variable(variable) => variable.compile(compiler, compile_meta),
-        Node::Assignment(assignment) => assignment.compile(compiler, compile_meta),
-        Node::If(r#if) => r#if.compile(compiler, compile_meta),
+        Node::Assignment(assignment) => todo!(),
+        Node::If(r#if) => todo!(),
         Node::Class(_) => todo!(),
         Node::Return(_) => todo!(),
-        Node::Expr(_) => bug!("EXPR_IS_STATEMENT_COMPILER"),
+        Node::Expr(_) => bug!("Expected statement, got an expression, COMPILE_EXPRESSION"),
         Node::EOI => unreachable!() // EOI will never get here
     }
 }

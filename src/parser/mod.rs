@@ -1,4 +1,4 @@
-use crate::{Rule, utils::Result};
+use crate::{utils::Result, Rule};
 
 use self::from_pair::Parse;
 
@@ -9,6 +9,11 @@ pub type Number = f64; // Number type
 pub enum Term {
     Number(Number),
     String(String),
+    Boolean(bool),
+    // Foolean(Foolean),
+    Array(Vec<Expr>),
+    Null,
+
     Ident(Ident),
 }
 
@@ -191,7 +196,6 @@ pub enum Expr {
     IndexExpr(IndexExpr),
     Term(Term),
     CallExpr(Call),
-    Null,
 }
 
 // AST
@@ -211,7 +215,7 @@ pub enum Node {
     Class(Class),
     Return(Return),
     Expr(Expr),
-    EOI
+    EOI,
 }
 
 pub type Tree = Vec<Node>;
@@ -230,35 +234,37 @@ pub fn parse_one(pair: pest::iterators::Pair<'_, Rule>) -> Result<Node> {
                 Rule::Module => Ok(Node::Module(Module::parse_from(statement).unwrap())),
                 Rule::TryCatch => Ok(Node::TryCatch(TryCatch::parse_from(statement).unwrap())),
                 Rule::Variable => Ok(Node::Variable(Variable::parse_from(statement).unwrap())),
-                Rule::AssignmentStatement => 
-                    Ok(Node::Assignment(Assignment::parse_from(statement)?)), 
+                Rule::AssignmentStatement => {
+                    Ok(Node::Assignment(Assignment::parse_from(statement)?))
+                }
                 Rule::IfBlock => Ok(Node::If(IfBlock::parse_from(statement)?)),
-                Rule::Class =>   Ok(Node::Class(Class::parse_from(statement)?)),
-                Rule::Return =>  Ok(Node::Return(Return::parse_from(statement)?)),
+                Rule::Class => Ok(Node::Class(Class::parse_from(statement)?)),
+                Rule::Return => Ok(Node::Return(Return::parse_from(statement)?)),
                 _ => Err("UNEXPECTED_STATEMENT".into()),
             }
         }
         Rule::Expr => {
             let expression = pair.into_inner().next().unwrap();
             match expression.as_rule() {
-                Rule::BinaryExpr => Ok(Node::Expr(Expr::BinaryExpr(
-                    BinaryExpr::parse_from(expression)?,
-                ))),
+                Rule::BinaryExpr => Ok(Node::Expr(Expr::BinaryExpr(BinaryExpr::parse_from(
+                    expression,
+                )?))),
                 Rule::ConditionalExpr => Ok(Node::Expr(Expr::ConditionalExpr(
                     ConditionalExpr::parse_from(expression)?,
                 ))),
-                Rule::IndexExpr => Ok(Node::Expr(Expr::IndexExpr(
-                    IndexExpr::parse_from(expression)?,
-                ))),
-                Rule::Call => Ok(Node::Expr(Expr::CallExpr(
-                    Call::parse_from(expression)?,
-                ))),
-                Rule::Null => Ok(Node::Expr(Expr::Null)),
+                Rule::IndexExpr => Ok(Node::Expr(Expr::IndexExpr(IndexExpr::parse_from(
+                    expression,
+                )?))),
+                Rule::Call => Ok(Node::Expr(Expr::CallExpr(Call::parse_from(expression)?))),
                 _ => Term::parse_from(expression).map(|x| Node::Expr(Expr::Term(x))),
             }
         }
         Rule::EOI => Ok(Node::EOI),
-        _ => Err(format!("Expected either Statement or Expr, but got {:?}", pair.as_rule()).into()),
+        _ => Err(format!(
+            "Expected either Statement or Expr, but got {:?}",
+            pair.as_rule()
+        )
+        .into()),
     }
 }
 

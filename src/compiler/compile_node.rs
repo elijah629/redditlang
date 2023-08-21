@@ -1,20 +1,20 @@
 use colored::Colorize;
 use inkwell::{
     values::{
-        ArrayValue, BasicMetadataValueEnum, BasicValueEnum, FloatValue, IntValue, PointerValue,
-    },
+        ArrayValue, BasicMetadataValueEnum, BasicValueEnum, FloatValue, IntValue, PointerValue, MetadataValue,
+    }, types::BasicTypeEnum, AddressSpace,
     /*FloatPredicate, IntPredicate,*/
 };
 
 use crate::{
     bug, error,
-    parser::{Assignment, Break, Call, Expr, IfBlock, Loop, MathOperator, Term, Variable},
+    parser::{Assignment, Break, Call, Expr, IfBlock, Loop, MathOperator, Term, Variable, Ident, Type}, compiler::ScopeVariable, utils::Result as ResultE,
 };
 
 use super::{compile, CompileMetadata, Compiler};
 
 pub trait Compile<'a> {
-    fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>);
+    fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) -> ResultE<()>;
 }
 
 pub trait Compute<'a, T> {
@@ -22,9 +22,84 @@ pub trait Compute<'a, T> {
         &self,
         compiler: &Compiler<'a>,
         compile_meta: &CompileMetadata<'a>,
-    ) -> Result<T, Box<dyn std::error::Error>>;
+    ) -> ResultE<T>;
 }
 
+impl<'a> Compile<'a> for Variable {
+    fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) -> ResultE<()> {
+        fn var<'a>(
+            x: BasicValueEnum<'a>,
+            ident: &str,
+            compiler: &Compiler<'a>,
+            compile_meta: &mut CompileMetadata<'a>,
+            r#type: ValidType
+        ) {
+            let alloca = compiler.builder.build_alloca(x.get_type(), &ident);
+            compiler.builder.build_store(alloca, x);
+
+            compile_meta
+                .function_scope
+                .variables
+                .insert(ident.to_string(), ScopeVariable { ptr: alloca, r#type }); // allows shadowing
+        }
+
+        let r#type = ValidType::try_from(&self.declaration.r#type)?;
+
+        match &self.value {
+            Expr::BinaryExpr(_) => todo!(),
+            Expr::ConditionalExpr(_) => todo!(),
+            Expr::IndexExpr(_) => todo!(),
+            Expr::Term(term) => {
+                // All terms, besides `Ident` are available at compile time.
+                
+                if !matches!(term, Term::Null | Term::Ident(..)) {
+                    if !r#type.same_as_term(term)? {
+                        return Err(format!("Invalid type, got {:?}, expected {:?}", term, r#type).into());
+                    }
+                }
+
+                let ident = self.declaration.ident.0.as_str();
+
+                match term {
+                    Term::Number(n) => {
+                        var(compiler.context.f64_type().const_float(*n).into(), ident, &compiler, compile_meta, r#type);
+                    },
+                    Term::String(s) => {
+                        var(compiler
+                            .builder
+                            .build_global_string_ptr(s, ".str")
+                           .as_pointer_value().into(), ident, &compiler, compile_meta, r#type);
+                        //compiler.context.i64_type().const_int(x.len() as u64, false);
+                    },
+                    Term::Ident(variable) => {
+                        let variable = compile_meta.function_scope.variables.get(&variable.0).ok_or(format!("Use of undefined variable {}", variable.0))?;
+                        if r#type != variable.r#type {
+                            return Err(format!("Attempt to assign {:?} to variable of type {:?}", variable.r#type, r#type).into());
+                        }
+                        var(variable.ptr.into(), ident, &compiler, compile_meta, r#type);
+                    },
+                    Term::Boolean(b) => {
+                        var(compiler.context.bool_type().const_int((*b).into(), false).into(), ident, &compiler, compile_meta, r#type);
+                    },
+                    Term::Array(_) => {
+                        todo!(); // recursion
+                    },
+                    Term::Null => {
+                        let t = r#type.get_llvm_type(&compiler);
+                        var(t.const_zero().into(), ident, &compiler, compile_meta, r#type);
+                    },
+                }
+            },
+            Expr::CallExpr(call) => {
+            
+                // compile call, store into x address, set variable to *x
+                todo!();
+            },
+        }
+        Ok(())
+    }
+}
+/*
 impl<'a> Compile<'a> for Call {
     fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) {
         let function = compiler
@@ -39,23 +114,23 @@ impl<'a> Compile<'a> for Call {
         let args: Vec<BasicMetadataValueEnum<'_>> = self
             .args
             .iter()
-            .map(|x| x.compute(compiler, compile_meta).unwrap())
+            /*.map(|x| x.compute(compiler, compile_meta).unwrap())
             .map(|z| match z {
                 Value::Number(x) => x.into(),
                 Value::Boolean(x) => x.into(),
                 Value::String(x, _) => x.into(),
                 Value::Array(x) => x.into(),
                 Value::Null => todo!(),
-            })
+            })*/
             .collect();
 
         compiler
             .builder
             .build_call(function, args.as_slice(), "return");
     }
-}
+}*/
 
-impl<'a> Compile<'a> for Loop {
+/*impl<'a> Compile<'a> for Loop {
     fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) {
         let function = compile_meta.basic_block.get_parent().unwrap();
         let loop_block = compiler.context.append_basic_block(function, "loop");
@@ -152,7 +227,7 @@ impl<'a> Compile<'a> for IfBlock {
         // );
         // compiler.builder.position_at_end(after_block);
     }
-}
+}*/
 
 /*fn to_boolean<'a>(compiler: &Compiler<'a>, value: Value<'a>) -> IntValue<'a> {
     let float = |x: FloatValue<'a>| {
@@ -182,17 +257,81 @@ impl<'a> Compile<'a> for IfBlock {
     }
 }*/
 
-#[derive(Debug)]
-pub enum Value<'a> {
-    Number(FloatValue<'a>),
-    /// Bit-width of 1
-    Boolean(IntValue<'a>),
-    String(PointerValue<'a>, IntValue<'a>), //  ptr, length
-    Array(ArrayValue<'a>),
-    Null,
+
+#[derive(Debug, PartialEq)]
+pub enum ValidType {
+    Number,
+    Boolean,
+    String,
+    Array(Box<ValidType>), // Array is generic
+    // Null, // it is not a type, but a value that is any type 
 }
 
-impl<'a> Compute<'a, Value<'a>> for Expr {
+impl TryFrom<Type> for ValidType {
+    type Error = String;
+
+    fn try_from(value: Type) -> Result<Self, Self::Error> {
+        (&value).try_into()
+    }
+}
+
+impl<'a> TryFrom<&'a Type> for ValidType {
+    type Error = String;
+
+    fn try_from(value: &'a Type) -> Result<Self, Self::Error> {
+        match value.root_type.0.as_str() {
+            "Number" => Ok(Self::Number),
+            "Boolean" => Ok(Self::Boolean),
+            "String" => Ok(Self::String),
+            "Array" => {
+                let generic1 = &value.generics[0];
+                let generic1 = ValidType::try_from(generic1)?;
+                Ok(Self::Array(Box::from(generic1)))
+            },
+            "Null" => Err("Null is not a valid type, did you mean to use `wat`?".to_string()),
+            _ => Err(format!("Invalid type, got {}", value.root_type.0))
+        }    
+    }
+}
+
+impl ValidType {
+    pub fn same_as_term(&self, term: &Term) -> Result<bool, String> {
+        match term {
+            Term::Number(_) => {
+                Ok(matches!(self, ValidType::Number))
+            },
+            Term::String(_) => {
+                Ok(matches!(self, ValidType::String))
+            },
+            Term::Boolean(_) => {
+                Ok(matches!(self, ValidType::Boolean))
+            },
+            Term::Array(_) => {
+                Ok(matches!(self, ValidType::Array(..))) // TODO: check array type
+            },
+            Term::Ident(_) => {
+                Err("term is an Ident, we do not know the type of an arbitrary identifier at compile time.".to_string())
+            },
+            Term::Null => {
+                Err("Null is not a valid type.".to_string())
+            },
+        }
+    }
+
+    pub fn get_llvm_type<'a>(&self, compiler: &Compiler<'a>) -> BasicTypeEnum<'a> {
+        match self {
+            ValidType::Number => compiler.context.f64_type().into(),  
+            ValidType::Boolean => compiler.context.bool_type().into(),
+            ValidType::String => compiler.context.i8_type().ptr_type(AddressSpace::default()).into(),
+            ValidType::Array(x) => {
+                let inner_type = x.get_llvm_type(&compiler);
+                inner_type.into_pointer_type().into()
+            },
+        }
+    }
+}
+
+/*impl<'a> Compute<'a, Value<'a>> for Expr {
     fn compute(
         &self,
         compiler: &Compiler<'a>,
@@ -349,4 +488,4 @@ impl<'a> Compile<'a> for Assignment {
             }
         }
     }
-}
+}*/

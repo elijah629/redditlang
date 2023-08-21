@@ -18,11 +18,10 @@ pub trait Parse {
 
 impl Parse for Type {
     fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
-        let mut inner = pair.into_inner();
-
-       // let inner_vec = inner.collect::<Vec<_>>();
+        let inner = pair.into_inner();
+        let root_type = Ident::parse_from(inner.clone().last().unwrap())?;
         let len = inner.len() - 1;
-       let generics = inner.clone().take(len).map(|x| {
+        let generics = inner.take(len).map(|x| {
             match x.as_rule() {
                Rule::Ident => {
                    Type {
@@ -36,8 +35,6 @@ impl Parse for Type {
                _ => bug!("UNEXPECTED_TYPE_RULE({})", x) 
             }
         }).collect::<Vec<_>>();
-
-       let root_type = Ident::parse_from(inner.next().unwrap())?;
 
        Ok(Self {
            generics,
@@ -122,15 +119,29 @@ impl Parse for Term {
                         Rule::Subtract => true,
                         _ => bug!("INVALID_SIGN({:?})", x.as_rule()),
                     })
-                    .unwrap_or(false);
+                    .unwrap_or(false); // change this to make numbers negative without a sign, will
+                                       // really mess with people
 
                 let magnitude: Number = inner.next().unwrap().as_str().parse().unwrap();
                 let value = if is_negative { -magnitude } else { magnitude };
                 Ok(Self::Number(value))
             }
             Rule::Ident => Ok(Self::Ident(Ident::parse_from(pair).unwrap())),
+            Rule::Array => {
+                todo!(); // TODO: Array parsing
+            },
+            Rule::Boolean => {
+                // Boolean > True | False
+                let bool = pair.into_inner().next().unwrap();
+                match bool.as_rule() {
+                    Rule::True => Ok(Self::Boolean(true)),
+                    Rule::False => Ok(Self::Boolean(false)),
+                    _ => bug!("INVALID_BOOL({:?})", bool.as_rule())
+                }
+            }
             Rule::Expr => todo!(), // TODO: Wrapped Expr Expr(Expr)
-            _ => Err("INVALID_RULE".into()),
+            Rule::Null => Ok(Self::Null),
+            _ => Err(format!("INVALID_RULE({:?})", pair.as_rule()).into()),
         }
     }
 }

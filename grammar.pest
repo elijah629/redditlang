@@ -68,7 +68,7 @@ Expr            =  {
   | Call
   | Term
 }
-Literal         = _{ Array | Number | String | Foolean | Boolean | Null }
+Literal         = _{ Array | Number | String | Boolean | Null }
 Term            = _{ Literal | Ident | "(" ~ Expr ~ ")" }
 
 // Possible values, in order of matching complexity:
@@ -76,8 +76,9 @@ Term            = _{ Literal | Ident | "(" ~ Expr ~ ")" }
 // Ident >> Ident
 // Ident
 
+// Example:
 // (Number >> Array,) >> Array
-// (Number, Number,) >> Dictionary
+// (String, Number,) >> Dictionary
 // Number
 
 TGeneric = _{ (Type ~ ",")+ }
@@ -137,9 +138,11 @@ MathOperator        = { Add | Subtract | Multiply | Divide | XOR | Modulus }
 ClassKwd = _{ "school " }
 Class    =  { ClassKwd ~ Ident ~ Block }
 
-// Primitives
-String        = ${ Quote ~ StringContent ~ Quote }
-StringContent = _{ Char* }
+// Types
+//                    haha char*
+String        = ${ Quote ~ Char* ~ Quote }
+
+// not type
 Char          = _{
     !("\"" | "\\") ~ ANY
   | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
@@ -153,7 +156,7 @@ Number    = ${ Sign? ~ Magnitude }
 
 Array = { "[" ~ (Expr ~ ",")* ~ "]" }
 
-/// Only for syntax errors ( constant indexes ), must convert to the "Number" type of the AST
+/// Only for syntax errors in array accesses. not an actual type
 UNumber = ${ Add? ~ Magnitude }
 
 Null = { "wat" }

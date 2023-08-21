@@ -55,7 +55,7 @@ pub fn link(
     std_path: &PathBuf,
     release: bool,
     no_std: bool,
-) -> PathBuf {
+) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let target_str = target_triple.as_str().to_str().unwrap();
 
     let compiler = cc::Build::new()
@@ -80,14 +80,11 @@ pub fn link(
 
     let output = command.output().unwrap();
 
-    if !ExitStatus::success(&output.status) {
-        for line in String::from_utf8(output.stderr).unwrap().lines() {
-            log::error!("{}", line);
-        }
-        std::process::exit(1);
+    if ExitStatus::success(&output.status) {
+        Ok(output_file)
+    } else {
+        Err(String::from_utf8(output.stderr).unwrap().into())
     }
-
-    output_file
 }
 
 pub fn define_libstd(compiler: &Compiler) {

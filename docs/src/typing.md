@@ -27,3 +27,7 @@ To type array's, you use the generic `T >> Array` type
     ```redditlang
     (<TYPE,...>) >> <TYPE>
     ```
+
+## Related Pages
+
+[Types](./types.md)

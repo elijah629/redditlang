@@ -106,17 +106,13 @@ enum Commands {
     },
 }
 
-fn get_current_project() -> Project {
-    match Project::from_path(env::current_dir().unwrap().as_path()) {
-        Some(x) => x,
-        None => {
-            error!("No valid {} found.", "walter.yml".bold());
-        }
-    }
-}
-
 fn main() {
     let args = Args::parse();
+    
+    main_r(args).unwrap_or_else(|x| error!("{}", x));
+}
+
+fn main_r(args: Args) -> Result<()> {
     logger::init().unwrap();
 
     match args.command {
@@ -127,26 +123,23 @@ fn main() {
             show_ir,
             show_ast,
         } => {
-            let output_file = cook(release, assembly, no_std, show_ir, show_ast);
+            let output_file = cook(release, assembly, no_std, show_ir, show_ast)?;
             log::info!(
                 "Done! Executable is avalible at {}",
                 output_file.to_str().unwrap().bold()
             );
         }
         Commands::Rise { name } => {
-            let cwd = env::current_dir().unwrap();
-            let path = match name {
-                Some(name) => cwd.join(name),
-                None => cwd,
-            };
+            let cwd = env::current_dir()?;
+            let path = name.map(|name| cwd.join(name)).unwrap_or(cwd);
 
-            fs::create_dir_all(&path).unwrap();
-            let is_empty = fs::read_dir(&path).unwrap().count() == 0;
+            fs::create_dir_all(&path)?;
+            let is_empty = fs::read_dir(&path)?.count() == 0;
 
             let pathstr = path.to_str().unwrap().bold();
 
             if !is_empty {
-                error!("{} exists and is not empty", pathstr);
+                return Err(format!("{} exists and is not empty", pathstr).into());
             }
 
             let name = path.file_name().unwrap().to_str().unwrap().to_string();
@@ -155,7 +148,7 @@ fn main() {
             const TEMPLATE_URL: &str = "https://github.com/elijah629/redditlang";
             const TEMPLATE_REFNAME: &str = "refs/remotes/origin/template";
 
-            generate(TEMPLATE_URL, Some(TEMPLATE_REFNAME), &path).unwrap();
+            generate(TEMPLATE_URL, Some(TEMPLATE_REFNAME), &path)?;
 
             let yaml = serde_yaml::to_string(&ProjectConfiguration {
                 name,
@@ -163,10 +156,10 @@ fn main() {
             })
             .unwrap();
 
-            fs::write(&path.join("walter.yml"), yaml).unwrap();
+            fs::write(&path.join("walter.yml"), yaml)?;
         }
         Commands::Clean => {
-            let project = get_current_project();
+            let project = Project::from_current()?;
             let build_dir = Path::new(&project.path).join("build");
 
             log::info!("Cleaning");
@@ -180,7 +173,7 @@ fn main() {
             args,
             show_ast,
         } => {
-            let output_file = cook(release, assembly, no_std, show_ir, show_ast);
+            let output_file = cook(release, assembly, no_std, show_ir, show_ast)?;
             log::info!("Running {}", output_file.to_str().unwrap().bold());
 
             let mut command = Command::new(output_file);
@@ -188,9 +181,10 @@ fn main() {
                 command.args(args);
             }
 
-            command.spawn().unwrap();
+            command.spawn()?;
         }
     }
+    Ok(())
 }
 
 fn parse_file(file: &str) -> Result<Tree> {
@@ -200,9 +194,10 @@ fn parse_file(file: &str) -> Result<Tree> {
     }
 }
 
-fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool, show_ast: bool) -> PathBuf {
-    let project = get_current_project();
-    let std_path = build_libstd().unwrap_or_else(|x| error!("Error building libstd: {:?}", x));
+// should be a config struct
+fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool, show_ast: bool) -> Result<PathBuf> {
+    let project = Project::from_current()?;
+    let std_path = build_libstd()?;
 
     let project_dir = Path::new(&project.path);
     let build_dir = project_dir
@@ -210,13 +205,13 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool, show_ast: bo
         .join(if release { "release" } else { "debug" });
     let src_dir = project_dir.join("src");
     let main_file = src_dir.join("main.rl");
-    let main_file = fs::read_to_string(&main_file).unwrap();
+    let main_file = fs::read_to_string(&main_file)?;
 
-    fs::create_dir_all(&build_dir).unwrap();
+    fs::create_dir_all(&build_dir)?;
 
     log::info!("Lexing/Parsing");
 
-    let tree = parse_file(&main_file).unwrap();
+    let tree = parse_file(&main_file)?;
 
     if show_ast {
         println!("{:#?}", tree);
@@ -255,7 +250,7 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool, show_ast: bo
                 variables: HashMap::new(),
             },
         },
-    );
+    )?;
 
     // Add return
     compiler
@@ -309,8 +304,7 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool, show_ast: bo
                 FileType::Object
             },
             &object_path,
-        )
-        .unwrap();
+        )?;
 
     log::info!("Linking");
 
