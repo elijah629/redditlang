@@ -32,7 +32,8 @@ impl Project {
     }
 
     pub fn from_current() -> Result<Self> {
-        Self::from_path(std::env::current_dir()?.as_path())
-            .map_err(|_| format!("No {} found in the current directory", "walter.yml".bold()).into())
+        Self::from_path(std::env::current_dir()?.as_path()).map_err(|_| {
+            format!("No {} found in the current directory", "walter.yml".bold()).into()
+        })
     }
 }

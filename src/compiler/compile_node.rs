@@ -1,46 +1,48 @@
-use colored::Colorize;
-use inkwell::{
-    values::{
-        ArrayValue, BasicMetadataValueEnum, BasicValueEnum, FloatValue, IntValue, PointerValue, MetadataValue,
-    }, types::BasicTypeEnum, AddressSpace,
-    /*FloatPredicate, IntPredicate,*/
-};
+use inkwell::{types::BasicTypeEnum, values::BasicValueEnum, AddressSpace};
 
 use crate::{
-    bug, error,
-    parser::{Assignment, Break, Call, Expr, IfBlock, Loop, MathOperator, Term, Variable, Ident, Type}, compiler::ScopeVariable, utils::Result as ResultE,
+    compiler::ScopeVariable,
+    parser::{Assignment, Expr, Term, Type, Variable},
+    utils::Result as ResultE,
 };
 
-use super::{compile, CompileMetadata, Compiler};
+use super::{CompileMetadata, Compiler};
 
 pub trait Compile<'a> {
-    fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) -> ResultE<()>;
+    fn compile(
+        &self,
+        compiler: &Compiler<'a>,
+        compile_meta: &mut CompileMetadata<'a>,
+    ) -> ResultE<()>;
 }
 
 pub trait Compute<'a, T> {
-    fn compute(
-        &self,
-        compiler: &Compiler<'a>,
-        compile_meta: &CompileMetadata<'a>,
-    ) -> ResultE<T>;
+    fn compute(&self, compiler: &Compiler<'a>, compile_meta: &CompileMetadata<'a>) -> ResultE<T>;
 }
 
 impl<'a> Compile<'a> for Variable {
-    fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) -> ResultE<()> {
+    fn compile(
+        &self,
+        compiler: &Compiler<'a>,
+        compile_meta: &mut CompileMetadata<'a>,
+    ) -> ResultE<()> {
         fn var<'a>(
             x: BasicValueEnum<'a>,
             ident: &str,
             compiler: &Compiler<'a>,
             compile_meta: &mut CompileMetadata<'a>,
-            r#type: ValidType
+            r#type: ValidType,
         ) {
             let alloca = compiler.builder.build_alloca(x.get_type(), &ident);
             compiler.builder.build_store(alloca, x);
 
-            compile_meta
-                .function_scope
-                .variables
-                .insert(ident.to_string(), ScopeVariable { ptr: alloca, r#type }); // allows shadowing
+            compile_meta.function_scope.variables.insert(
+                ident.to_string(),
+                ScopeVariable {
+                    ptr: alloca,
+                    r#type,
+                },
+            ); // allows shadowing
         }
 
         let r#type = ValidType::try_from(&self.declaration.r#type)?;
@@ -51,10 +53,12 @@ impl<'a> Compile<'a> for Variable {
             Expr::IndexExpr(_) => todo!(),
             Expr::Term(term) => {
                 // All terms, besides `Ident` are available at compile time.
-                
+
                 if !matches!(term, Term::Null | Term::Ident(..)) {
                     if !r#type.same_as_term(term)? {
-                        return Err(format!("Invalid type, got {:?}, expected {:?}", term, r#type).into());
+                        return Err(
+                            format!("Invalid type, got {:?}, expected {:?}", term, r#type).into(),
+                        );
                     }
                 }
 
@@ -62,40 +66,143 @@ impl<'a> Compile<'a> for Variable {
 
                 match term {
                     Term::Number(n) => {
-                        var(compiler.context.f64_type().const_float(*n).into(), ident, &compiler, compile_meta, r#type);
-                    },
+                        var(
+                            compiler.context.f64_type().const_float(*n).into(),
+                            ident,
+                            &compiler,
+                            compile_meta,
+                            r#type,
+                        );
+                    }
                     Term::String(s) => {
-                        var(compiler
-                            .builder
-                            .build_global_string_ptr(s, ".str")
-                           .as_pointer_value().into(), ident, &compiler, compile_meta, r#type);
+                        var(
+                            compiler
+                                .builder
+                                .build_global_string_ptr(s, ".str")
+                                .as_pointer_value()
+                                .into(),
+                            ident,
+                            &compiler,
+                            compile_meta,
+                            r#type,
+                        );
                         //compiler.context.i64_type().const_int(x.len() as u64, false);
-                    },
+                    }
                     Term::Ident(variable) => {
-                        let variable = compile_meta.function_scope.variables.get(&variable.0).ok_or(format!("Use of undefined variable {}", variable.0))?;
+                        let variable = compile_meta
+                            .function_scope
+                            .variables
+                            .get(&variable.0)
+                            .ok_or(format!("Use of undefined variable {}", variable.0))?;
                         if r#type != variable.r#type {
-                            return Err(format!("Attempt to assign {:?} to variable of type {:?}", variable.r#type, r#type).into());
+                            return Err(format!(
+                                "Attempt to assign {:?} to variable of type {:?}",
+                                variable.r#type, r#type
+                            )
+                            .into());
                         }
                         var(variable.ptr.into(), ident, &compiler, compile_meta, r#type);
-                    },
+                    }
                     Term::Boolean(b) => {
-                        var(compiler.context.bool_type().const_int((*b).into(), false).into(), ident, &compiler, compile_meta, r#type);
-                    },
+                        var(
+                            compiler
+                                .context
+                                .bool_type()
+                                .const_int((*b).into(), false)
+                                .into(),
+                            ident,
+                            &compiler,
+                            compile_meta,
+                            r#type,
+                        );
+                    }
                     Term::Array(_) => {
                         todo!(); // recursion
-                    },
+                    }
                     Term::Null => {
                         let t = r#type.get_llvm_type(&compiler);
-                        var(t.const_zero().into(), ident, &compiler, compile_meta, r#type);
-                    },
+                        var(
+                            t.const_zero().into(),
+                            ident,
+                            &compiler,
+                            compile_meta,
+                            r#type,
+                        );
+                    }
                 }
-            },
-            Expr::CallExpr(call) => {
-            
+            }
+            Expr::CallExpr(_call) => {
                 // compile call, store into x address, set variable to *x
                 todo!();
-            },
+            }
         }
+        Ok(())
+    }
+}
+
+impl<'a> Compile<'a> for Assignment {
+    fn compile(
+        &self,
+        compiler: &Compiler<'a>,
+        compile_meta: &mut CompileMetadata<'a>,
+    ) -> ResultE<()> {
+        let var = compile_meta
+            .function_scope
+            .variables
+            .get(&self.ident.0)
+            .ok_or::<Box<dyn std::error::Error>>(format!("Assignment to undefined variable {}", self.ident.0).into())?;
+
+        let value = match &self.value {
+            Expr::BinaryExpr(_) => todo!(),
+            Expr::ConditionalExpr(_) => todo!(),
+            Expr::IndexExpr(_) => todo!(),
+            Expr::Term(term) => {
+                // All terms, besides `Ident` are available at compile time.
+
+                if !matches!(term, Term::Null | Term::Ident(..)) {
+                    if !var.r#type.same_as_term(&term)? {
+                        return Err(
+                            format!("Invalid type, got {:?}, expected {:?}", term, var.r#type).into(),
+                        );
+                    }
+                }
+
+                match term {
+                    Term::Number(x) => compiler.context.f64_type().const_float(*x).into(),
+                    Term::String(x) => compiler
+                        .builder
+                        .build_global_string_ptr(&x, ".str")
+                        .as_pointer_value()
+                        .into(),
+                    Term::Boolean(x) => compiler
+                        .context
+                        .bool_type()
+                        .const_int((*x).into(), false)
+                        .into(),
+                    Term::Array(_) => todo!(),
+                    Term::Null => var.r#type.get_llvm_type(compiler).const_zero(),
+                    Term::Ident(x) => {
+                        let variable = compile_meta
+                            .function_scope
+                            .variables
+                            .get(&x.0)
+                            .ok_or(format!("Use of undefined variable {}", x.0))?;
+                        if var.r#type != variable.r#type {
+                            return Err(format!(
+                                "Attempt to assign {:?} to variable of type {:?}",
+                                variable.r#type, var.r#type
+                            )
+                            .into());
+                        }
+
+                        variable.ptr.into()
+                    }
+                }
+            }
+            Expr::CallExpr(_) => todo!(),
+        };
+
+        compiler.builder.build_store(var.ptr, value);
         Ok(())
     }
 }
@@ -257,14 +364,13 @@ impl<'a> Compile<'a> for IfBlock {
     }
 }*/
 
-
 #[derive(Debug, PartialEq)]
 pub enum ValidType {
     Number,
     Boolean,
     String,
     Array(Box<ValidType>), // Array is generic
-    // Null, // it is not a type, but a value that is any type 
+                           // Null, // it is not a type, but a value that is any type
 }
 
 impl TryFrom<Type> for ValidType {
@@ -287,10 +393,10 @@ impl<'a> TryFrom<&'a Type> for ValidType {
                 let generic1 = &value.generics[0];
                 let generic1 = ValidType::try_from(generic1)?;
                 Ok(Self::Array(Box::from(generic1)))
-            },
+            }
             "Null" => Err("Null is not a valid type, did you mean to use `wat`?".to_string()),
-            _ => Err(format!("Invalid type, got {}", value.root_type.0))
-        }    
+            _ => Err(format!("Invalid type, got {}", value.root_type.0)),
+        }
     }
 }
 
@@ -320,13 +426,17 @@ impl ValidType {
 
     pub fn get_llvm_type<'a>(&self, compiler: &Compiler<'a>) -> BasicTypeEnum<'a> {
         match self {
-            ValidType::Number => compiler.context.f64_type().into(),  
+            ValidType::Number => compiler.context.f64_type().into(),
             ValidType::Boolean => compiler.context.bool_type().into(),
-            ValidType::String => compiler.context.i8_type().ptr_type(AddressSpace::default()).into(),
+            ValidType::String => compiler
+                .context
+                .i8_type()
+                .ptr_type(AddressSpace::default())
+                .into(),
             ValidType::Array(x) => {
                 let inner_type = x.get_llvm_type(&compiler);
                 inner_type.into_pointer_type().into()
-            },
+            }
         }
     }
 }

@@ -17,14 +17,14 @@ pub fn build_libstd() -> Result<PathBuf, Box<dyn std::error::Error>> {
     let std_dir = walter_dir.join("stdlib");
 
     fs::create_dir_all(&walter_dir)?;
- 
+
     // Ensure libstd is up to date, should just not do this. ie check for new commits
     let up_to_date = update(STDLIB_URL, &std_dir, "main").expect("Failed to update libstd repo");
 
     if up_to_date {
         return Ok(std_dir.join("libstd.a"));
     }
-    
+
     info!("Updating libstd");
 
     Command::new("cargo")
@@ -55,6 +55,7 @@ pub fn link(
     std_path: &PathBuf,
     release: bool,
     no_std: bool,
+    strip: bool
 ) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let target_str = target_triple.as_str().to_str().unwrap();
 
@@ -73,6 +74,10 @@ pub fn link(
 
     if !no_std {
         command.arg(&std_path);
+    }
+
+    if strip {
+        command.arg("-s");
     }
 
     command.arg("-o");
@@ -96,14 +101,18 @@ pub fn define_libstd(compiler: &Compiler) {
             .into()],
         false,
     );
-    compiler
-        .module
-        .add_function("coitusinterruptus", println_type, None);
 
-    let println_type = compiler
+    let nums_type = compiler
         .context
         .i8_type()
         .ptr_type(AddressSpace::default())
         .fn_type(&[compiler.context.f64_type().into()], false);
-    compiler.module.add_function("nums", println_type, None);
+
+    let exit_type = compiler.context.void_type().fn_type(&[compiler.context.f64_type().into()], false);
+    
+    compiler
+        .module
+        .add_function("coitusinterruptus", println_type, None);
+    compiler.module.add_function("nums", nums_type, None);
+    compiler.module.add_function("exit", exit_type, None);
 }

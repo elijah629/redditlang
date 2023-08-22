@@ -1,4 +1,4 @@
-use git2::{Repository, ResetType, Direction};
+use git2::{Direction, Repository, ResetType};
 use std::{fs, path::Path};
 
 use crate::utils::Result;
@@ -20,11 +20,7 @@ fn pull(repo: &Repository, remote: &str, branch: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn clone_else_pull<P: AsRef<Path>>(
-    url: &str,
-    into: P,
-    branch: &str,
-) -> Result<()> {
+pub fn clone_else_pull<P: AsRef<Path>>(url: &str, into: P, branch: &str) -> Result<()> {
     let cloned = into.as_ref().try_exists()?;
     if cloned {
         let repo = Repository::open(&into)?;
@@ -38,15 +34,11 @@ pub fn clone_else_pull<P: AsRef<Path>>(
 /// Update a repository to the latest commit, if it is not cloned, do so. if it is cloned, compare
 /// remote and local hashes to see if it is up to date, if it is not, pull. Returns a value that
 /// indicates if the repository is up to date.
-pub fn update<P: AsRef<Path>>(
-    url: &str,
-    into: P,
-    branch: &str
-) -> Result<bool> {
+pub fn update<P: AsRef<Path>>(url: &str, into: P, branch: &str) -> Result<bool> {
     let cloned = into.as_ref().try_exists()?;
     if cloned {
         let repo = Repository::open(&into)?;
-        
+
         let local = repo.head()?;
         let local_hash = local.peel_to_commit()?.id();
 
@@ -72,11 +64,7 @@ pub fn checkout(repo: &Repository, refname: &str) -> Result<()> {
 }
 
 /// Makes a new repository with the content of the repository at `url`
-pub fn generate<P: AsRef<Path>>(
-    url: &str,
-    branch: Option<&str>,
-    into: P,
-) -> Result<()> {
+pub fn generate<P: AsRef<Path>>(url: &str, branch: Option<&str>, into: P) -> Result<()> {
     let repo = Repository::clone(&url, &into)?;
 
     if let Some(branch) = branch {

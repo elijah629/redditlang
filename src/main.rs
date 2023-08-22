@@ -20,7 +20,6 @@ use pest::Parser as PestParser;
 use pest_derive::Parser as PestParser;
 use project::Project;
 use semver::Version;
-use utils::Result;
 use std::{
     collections::HashMap,
     env, fs,
@@ -28,6 +27,7 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
 };
+use utils::Result;
 
 pub mod compiler;
 pub mod errors;
@@ -60,17 +60,21 @@ enum Commands {
         #[arg(short, long)]
         assembly: bool,
 
-        /// Does not link the standard library
+        /// Don't link the standard library
         #[arg(short, long)]
         no_std: bool,
 
-        /// Shows the LLVM IR when compiling
+        /// Strip the resulting executable
         #[arg(short, long)]
-        show_ir: bool,
+        strip: bool,
 
-        /// Shows the AST when parsing
+        /// Prints the LLVM IR when compiling
+        #[arg(short = 'i', long)]
+        print_ir: bool,
+
+        /// Prints the AST when parsing
         #[arg(short = 't', long)]
-        show_ast: bool,
+        print_ast: bool,
     },
     /// Builds and runs program
     Serve {
@@ -82,17 +86,21 @@ enum Commands {
         #[arg(short, long)]
         assembly: bool,
 
-        /// Does not link the standard library
+        /// Don't link the standard library
         #[arg(short, long)]
         no_std: bool,
 
-        /// Shows the LLVM IR when compiling
+        /// Strip the resulting executable
         #[arg(short, long)]
-        show_ir: bool,
+        strip: bool,
 
-        /// Shows the AST when parsing
+        /// Prints the LLVM IR when compiling
+        #[arg(short = 'i', long)]
+        print_ir: bool,
+
+        /// Prints the AST when parsing
         #[arg(short = 't', long)]
-        show_ast: bool,
+        print_ast: bool,
 
         /// Optional arguments to pass to the program.
         args: Option<Vec<String>>,
@@ -108,7 +116,7 @@ enum Commands {
 
 fn main() {
     let args = Args::parse();
-    
+
     main_r(args).unwrap_or_else(|x| error!("{}", x));
 }
 
@@ -120,10 +128,11 @@ fn main_r(args: Args) -> Result<()> {
             release,
             assembly,
             no_std,
-            show_ir,
-            show_ast,
+            print_ir,
+            print_ast,
+            strip,
         } => {
-            let output_file = cook(release, assembly, no_std, show_ir, show_ast)?;
+            let output_file = cook(release, assembly, no_std, print_ir, print_ast, strip)?;
             log::info!(
                 "Done! Executable is avalible at {}",
                 output_file.to_str().unwrap().bold()
@@ -169,11 +178,12 @@ fn main_r(args: Args) -> Result<()> {
             release,
             assembly,
             no_std,
-            show_ir,
+            strip,
+            print_ir,
+            print_ast,
             args,
-            show_ast,
         } => {
-            let output_file = cook(release, assembly, no_std, show_ir, show_ast)?;
+            let output_file = cook(release, assembly, no_std, print_ir, print_ast, strip)?;
             log::info!("Running {}", output_file.to_str().unwrap().bold());
 
             let mut command = Command::new(output_file);
@@ -195,7 +205,14 @@ fn parse_file(file: &str) -> Result<Tree> {
 }
 
 // should be a config struct
-fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool, show_ast: bool) -> Result<PathBuf> {
+fn cook(
+    release: bool,
+    assembly: bool,
+    no_std: bool,
+    print_ir: bool,
+    print_ast: bool,
+    strip: bool,
+) -> Result<PathBuf> {
     let project = Project::from_current()?;
     let std_path = build_libstd()?;
 
@@ -213,7 +230,7 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool, show_ast: bo
 
     let tree = parse_file(&main_file)?;
 
-    if show_ast {
+    if print_ast {
         println!("{:#?}", tree);
     }
 
@@ -253,11 +270,9 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool, show_ast: bo
     )?;
 
     // Add return
-    compiler
-        .builder
-        .build_return(Some(&compiler.context.i32_type().const_zero()));
+    compiler.builder.build_return(Some(&compiler.context.i32_type().const_zero()));
 
-    if show_ir {
+    if print_ir {
         println!("{}", &compiler.module.print_to_string().to_str().unwrap());
     }
 
@@ -295,16 +310,15 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool, show_ast: bo
         .create_target_machine(target_triple, "x86-64", "+avx2", opt, reloc, model)
         .unwrap();
 
-    target_machine
-        .write_to_file(
-            &compiler.module,
-            if assembly {
-                FileType::Assembly
-            } else {
-                FileType::Object
-            },
-            &object_path,
-        )?;
+    target_machine.write_to_file(
+        &compiler.module,
+        if assembly {
+            FileType::Assembly
+        } else {
+            FileType::Object
+        },
+        &object_path,
+    )?;
 
     log::info!("Linking");
 
@@ -316,5 +330,6 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool, show_ast: bo
         &std_path,
         release,
         no_std,
+        strip
     )
 }

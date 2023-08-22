@@ -21,35 +21,32 @@ impl Parse for Type {
         let inner = pair.into_inner();
         let root_type = Ident::parse_from(inner.clone().last().unwrap())?;
         let len = inner.len() - 1;
-        let generics = inner.take(len).map(|x| {
-            match x.as_rule() {
-               Rule::Ident => {
-                   Type {
-                       generics: vec![],
-                       root_type: Ident::parse_from(x).unwrap()
-                   } 
-               },
-               Rule::Type => {
-                  Type::parse_from(x).unwrap()
-               }
-               _ => bug!("UNEXPECTED_TYPE_RULE({})", x) 
-            }
-        }).collect::<Vec<_>>();
+        let generics = inner
+            .take(len)
+            .map(|x| match x.as_rule() {
+                Rule::Ident => Type {
+                    generics: vec![],
+                    root_type: Ident::parse_from(x).unwrap(),
+                },
+                Rule::Type => Type::parse_from(x).unwrap(),
+                _ => bug!("UNEXPECTED_TYPE_RULE({})", x),
+            })
+            .collect::<Vec<_>>();
 
-       Ok(Self {
-           generics,
-           root_type
-       })
+        Ok(Self {
+            generics,
+            root_type,
+        })
     }
 }
 
 impl Parse for Declaration {
     fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
-        let mut inner = pair.into_inner(); 
-        let ident = Ident::parse_from(inner.next().unwrap())?; 
+        let mut inner = pair.into_inner();
+        let ident = Ident::parse_from(inner.next().unwrap())?;
 
         let r#type = Type::parse_from(inner.next().unwrap())?;
-        
+
         Ok(Self { ident, r#type })
     }
 }
@@ -129,14 +126,14 @@ impl Parse for Term {
             Rule::Ident => Ok(Self::Ident(Ident::parse_from(pair).unwrap())),
             Rule::Array => {
                 todo!(); // TODO: Array parsing
-            },
+            }
             Rule::Boolean => {
                 // Boolean > True | False
                 let bool = pair.into_inner().next().unwrap();
                 match bool.as_rule() {
                     Rule::True => Ok(Self::Boolean(true)),
                     Rule::False => Ok(Self::Boolean(false)),
-                    _ => bug!("INVALID_BOOL({:?})", bool.as_rule())
+                    _ => bug!("INVALID_BOOL({:?})", bool.as_rule()),
                 }
             }
             Rule::Expr => todo!(), // TODO: Wrapped Expr Expr(Expr)
@@ -235,7 +232,7 @@ impl Parse for Variable {
                         message: "Invalid modifier".to_owned(),
                     },
                     start_pos,
-                    )),
+                )),
             })
             .collect();
         let declaration = Declaration::parse_from(inner.next().unwrap())?;
@@ -356,7 +353,7 @@ impl Parse for IfBlock {
                         Rule::Else => IfNode::Else(Else {
                             body: Tree::parse_from(inner.next().unwrap()).unwrap(),
                         }),
-                        _ => unreachable!()
+                        _ => unreachable!(),
                     }
                 }
                 _ => bug!("INVALID_IFNODE({:?})", x.as_rule()),

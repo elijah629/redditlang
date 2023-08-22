@@ -1,16 +1,17 @@
 subreddit r/ProgammerHumor
 
-# These statements have identical meanings
+# These two keywords have identical meanings, you can specify a module name or a file name in both
 weneed "ProgrammerHumor"
 bringme "memes.rl"
 
-repeatdatshid {
+weneed "memes.rl"
+bringme "ProgrammerHumor"
 
+repeatdatshid {
+  sthu
 }
 
-sthu
-
-debug bar callmeonmycellphone split damn String[](x damn String, splitter damn String,) {
+debug bar callmeonmycellphone split damn Array << String(x damn String, splitter damn String,) {
    
 }
 
@@ -47,8 +48,9 @@ school Lab {
 
 spez 80085
 
-bar meth name damn a ∑ a[1]
+meth a damn Number << Array [1,2,3] 
+meth a_first damn Number ∑ a[-1]
 
 #*
-Multiline also works
+Multiline comment
 *#
