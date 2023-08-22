@@ -36,7 +36,7 @@
 - 🎮 cross platform
 - very opinionated, only forcing the best of practices. For example, if you use inline macros, the police will be called with the message that a fire has broken out at your home, they will promptly come to put out your garbage code.
 - sometimes typed
-- If you still aren't devoting your entire carrer to this, it's like C ( minus the pointers ), Rust ( minus the copyright ) and JavaScript ( only the "good" features ) all in one neat package.
+- If you still aren't devoting your entire career to this, it's like C ( minus the pointers ), Rust ( minus the copyright ) and JavaScript ( only the "good" features ) all in one neat package.
 
 So what are you waiting for? Please invest your life savings in this!
 _[Check out the Official VSCode extension here](https://marketplace.visualstudio.com/items?itemName=elijah629.redditlang)_
