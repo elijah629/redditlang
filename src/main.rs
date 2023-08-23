@@ -13,7 +13,7 @@ use git::generate;
 use inkwell::{
     context::Context,
     targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine},
-    OptimizationLevel,
+    OptimizationLevel, module::Module,
 };
 use parser::{parse, Tree};
 use pest::Parser as PestParser;
@@ -21,7 +21,7 @@ use pest_derive::Parser as PestParser;
 use project::Project;
 use semver::Version;
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     env, fs,
     hash::Hash,
     path::{Path, PathBuf},
@@ -234,57 +234,98 @@ fn cook(
         println!("{:#?}", tree);
     }
 
-    log::info!("Compiling");
+    log::info!("Building module tree");
+
+    fn get_all_module_trees(tree: &Tree) -> Result<HashMap<String, Tree>> {
+        let mut mods = HashMap::new();
+
+        for node in tree {
+            match node {
+                parser::Node::Import(import) => {
+                    let path = &import.path;
+                    let tree = parse_file(&path)?;
+                    mods.extend(get_all_module_trees(&tree)?);
+                    mods.insert(path.to_string(), tree);
+                }
+                // parser::Node::Module(_) => todo!(),
+                _ => (),
+            }
+        }
+
+        Ok(mods)
+    }
+
+    // 1. recursively navigate tree, following all imports. returns a Vec<Tree> with no duplicates
+    // 2. compile each tree
+    // 3. link all modules together
+
+    let mut trees = get_all_module_trees(&tree)?;
+    trees.insert("main".to_string(), tree);
+
+    log::info!("Compiling {} {}", trees.len().to_string().bold(), if trees.len() == 1 { "tree" } else { "trees" });
 
     let context = Context::create();
-    let module = context.create_module("main");
     let builder = context.create_builder();
 
-    let compiler = Compiler {
-        context: &context,
-        module,
-        builder,
-    };
+    let combined_module = trees.into_iter().map(|(name, tree)| {
+        let module = context.create_module(&name);
+        let compiler = Compiler {
+            context: &context,
+            module,
+            builder: &builder,
+        };
 
-    define_libstd(&compiler);
+        define_libstd(&compiler);
 
-    let entry_basic_block = {
         let compiler = &compiler;
         let main_type = compiler.context.i32_type().fn_type(&[], false);
         let main_fn = compiler.module.add_function("main", main_type, None);
 
         let entry_basic_block = compiler.context.append_basic_block(main_fn, "");
         compiler.builder.position_at_end(entry_basic_block);
-        entry_basic_block
-    };
 
-    compile(
-        &compiler,
-        &tree,
-        &mut CompileMetadata {
-            basic_block: entry_basic_block,
-            function_scope: Scope {
-                variables: HashMap::new(),
+        compile(
+            &compiler,
+            &tree,
+            &mut CompileMetadata {
+                r#loop: None,
+                fn_value: main_fn,
+                function_scope: Scope {
+                    variables: HashMap::new(),
+                },
             },
-        },
-    )?;
+        )?;
 
-    // Add return
-    compiler.builder.build_return(Some(&compiler.context.i32_type().const_zero()));
+        // Add return
+        compiler
+            .builder
+            .build_return(Some(&compiler.context.i32_type().const_zero()));
 
-    if print_ir {
-        println!("{}", &compiler.module.print_to_string().to_str().unwrap());
-    }
-
-    // LLVM errors
-    if let Err(x) = compiler.module.verify() {
-        log::error!("│ {}", "Module verification failed".bold());
-        let lines: Vec<&str> = x.to_str().unwrap().lines().collect();
-        for line in &lines[0..lines.len() - 1] {
-            log::error!("│  {}", line);
+        let module_name = &compiler.module.get_name().to_str()?;
+        if print_ir {
+            println!("Module: {}", module_name.bold());
+            println!("{}", &compiler.module.print_to_string().to_str().unwrap());
         }
-        error!("└─ {}\n", lines.last().unwrap());
-    };
+
+        // LLVM errors
+        if let Err(x) = compiler.module.verify() {
+            log::error!("│ Module verification for {} failed", module_name.bold());
+            let lines: Vec<&str> = x.to_str().unwrap().lines().collect();
+            for line in &lines[0..lines.len() - 1] {
+                log::error!("│  {}", line);
+            }
+            error!("└─ {}\n", lines.last().unwrap());
+        };
+
+        Ok(compiler.module.clone())
+    }).reduce(|a: Result<Module<'_>>, c| {
+        let a = a?;
+        let c = c?;
+
+        c.link_in_module(a)?;
+
+        Ok(c)
+    }).unwrap()?;
 
     // TODO: allow user chosen targets
     Target::initialize_x86(&InitializationConfig::default());
@@ -311,7 +352,7 @@ fn cook(
         .unwrap();
 
     target_machine.write_to_file(
-        &compiler.module,
+        &combined_module,
         if assembly {
             FileType::Assembly
         } else {
@@ -330,6 +371,6 @@ fn cook(
         &std_path,
         release,
         no_std,
-        strip
+        strip,
     )
 }

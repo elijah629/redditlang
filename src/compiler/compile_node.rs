@@ -1,12 +1,19 @@
-use inkwell::{types::BasicTypeEnum, values::BasicValueEnum, AddressSpace};
+use std::ffi::CString;
+
+use inkwell::{
+    intrinsics::Intrinsic,
+    types::BasicTypeEnum,
+    values::{ArrayValue, BasicValueEnum},
+    AddressSpace,
+};
 
 use crate::{
     compiler::ScopeVariable,
-    parser::{Assignment, Expr, Term, Type, Variable},
+    parser::{Assignment, Break, Expr, Loop, Term, Type, Variable},
     utils::Result as ResultE,
 };
 
-use super::{CompileMetadata, Compiler};
+use super::{compile, CompileMetadata, Compiler, LoopMetadata};
 
 pub trait Compile<'a> {
     fn compile(
@@ -150,7 +157,9 @@ impl<'a> Compile<'a> for Assignment {
             .function_scope
             .variables
             .get(&self.ident.0)
-            .ok_or::<Box<dyn std::error::Error>>(format!("Assignment to undefined variable {}", self.ident.0).into())?;
+            .ok_or::<Box<dyn std::error::Error>>(
+                format!("Assignment to undefined variable {}", self.ident.0).into(),
+            )?;
 
         let value = match &self.value {
             Expr::BinaryExpr(_) => todo!(),
@@ -161,19 +170,29 @@ impl<'a> Compile<'a> for Assignment {
 
                 if !matches!(term, Term::Null | Term::Ident(..)) {
                     if !var.r#type.same_as_term(&term)? {
-                        return Err(
-                            format!("Invalid type, got {:?}, expected {:?}", term, var.r#type).into(),
-                        );
+                        return Err(format!(
+                            "Invalid type, got {:?}, expected {:?}",
+                            term, var.r#type
+                        )
+                        .into());
                     }
                 }
 
                 match term {
                     Term::Number(x) => compiler.context.f64_type().const_float(*x).into(),
-                    Term::String(x) => compiler
-                        .builder
-                        .build_global_string_ptr(&x, ".str")
-                        .as_pointer_value()
-                        .into(),
+                    Term::String(x) => {
+                        let mut chars = x
+                            .chars()
+                            .map(|x| compiler.context.i8_type().const_int(x.into(), false))
+                            .collect::<Vec<_>>();
+                        chars.push(compiler.context.i8_type().const_int(0, false)); // null terminator
+
+                        compiler
+                            .context
+                            .i8_type()
+                            .const_array(chars.as_slice())
+                            .into()
+                    }
                     Term::Boolean(x) => compiler
                         .context
                         .bool_type()
@@ -206,6 +225,74 @@ impl<'a> Compile<'a> for Assignment {
         Ok(())
     }
 }
+
+impl<'a> Compile<'a> for Loop {
+    fn compile(
+        &self,
+        compiler: &Compiler<'a>,
+        compile_meta: &mut CompileMetadata<'a>,
+    ) -> ResultE<()> {
+        let fn_value = compile_meta.fn_value;
+        let loop_block = compiler.context.append_basic_block(fn_value, "loop");
+        let exit_block = compiler.context.append_basic_block(fn_value, "exit");
+
+        // RT JMP start loop_block
+        compiler.builder.build_unconditional_branch(loop_block);
+
+        // COMP JMP end loop_block
+        compiler.builder.position_at_end(loop_block);
+        //        let (exit_block, break_values, value) = self.gen_loop_block_expr(body_expr, exit_block);
+        //
+        compile_meta.r#loop = Some(LoopMetadata {
+            exit_block,
+            loop_block,
+        });
+
+        compile(&compiler, &self.body, compile_meta)?;
+
+        compile_meta.r#loop = None;
+
+        compiler
+            .builder
+            .position_at_end(exit_block.get_previous_basic_block().unwrap());
+
+        // RT JMP start loop_block
+        compiler.builder.build_unconditional_branch(loop_block);
+
+        // COMP JMP end exit_block
+        compiler.builder.position_at_end(exit_block);
+
+        // RT JMP start exit_block
+        // compiler.builder.build_unconditional_branch(exit_block);
+
+        //if value.is_some() {
+        //    self.builder.build_unconditional_branch(loop_block);
+        //}
+        Ok(())
+    }
+}
+
+impl<'a> Compile<'a> for Break {
+    fn compile(
+        &self,
+        compiler: &Compiler<'a>,
+        compile_meta: &mut CompileMetadata<'a>,
+    ) -> ResultE<()> {
+        let r#loop = compile_meta
+            .r#loop
+            .as_ref()
+            .ok_or("Break used outside of a loop".to_string())?;
+        compiler
+            .builder
+            .build_unconditional_branch(r#loop.exit_block);
+        compiler
+            .context
+            .insert_basic_block_after(r#loop.loop_block, "_break_seperator");
+
+        Ok(())
+    }
+}
+
 /*
 impl<'a> Compile<'a> for Call {
     fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) {

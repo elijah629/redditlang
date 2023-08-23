@@ -8,7 +8,7 @@ use crate::{
 };
 use inkwell::{
     basic_block::BasicBlock, builder::Builder, context::Context, module::Module,
-    values::PointerValue,
+    values::{PointerValue, FunctionValue},
 };
 
 pub mod compile_node;
@@ -16,7 +16,7 @@ pub mod linking;
 
 pub struct Compiler<'ctx> {
     pub context: &'ctx Context,
-    pub builder: Builder<'ctx>,
+    pub builder: &'ctx Builder<'ctx>,
     pub module: Module<'ctx>,
 }
 
@@ -31,9 +31,15 @@ pub struct Scope<'a> {
     pub variables: HashMap<String, ScopeVariable<'a>>,
 }
 
+pub struct LoopMetadata<'a> {
+    exit_block: BasicBlock<'a>,
+    loop_block: BasicBlock<'a>,
+}
+
 pub struct CompileMetadata<'a> {
-    pub basic_block: BasicBlock<'a>,
+    pub r#loop: Option<LoopMetadata<'a>>,
     pub function_scope: Scope<'a>,
+    pub fn_value: FunctionValue<'a>
 }
 
 pub fn compile<'a>(
@@ -61,8 +67,9 @@ pub fn compile_one<'a>(
         Node::Variable(x) => x,
         Node::Assignment(x) => x,
 
-        Node::Loop(r#loop) => todo!(),
-        Node::Break(r#break) => todo!(),
+        Node::Loop(x) => x,
+        Node::Break(x) => x,
+
         Node::Function(_) => todo!(),
         Node::Call(call) => todo!(),
         Node::Import(_) => todo!(),

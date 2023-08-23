@@ -183,6 +183,12 @@ impl Parse for Import {
     fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
         let path = Term::parse_from(inner.next().unwrap())?;
+
+        let path = match path {
+            Term::String(x) => x,
+            _ => bug!("INVALID_IMPORT_TERM({:?})", path)
+        };
+
         Ok(Self { path })
     }
 }

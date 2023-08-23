@@ -66,7 +66,7 @@ pub struct Throw {
 
 #[derive(Debug)]
 pub struct Import {
-    pub path: Term,
+    pub path: String,
 }
 
 #[derive(Debug)]
