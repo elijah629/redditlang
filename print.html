@@ -84,7 +84,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">Specification</li><li class="chapter-item expanded "><a href="document-conventions.html"><strong aria-hidden="true">2.</strong> Document Conventions</a></li><li class="chapter-item expanded "><a href="blocks.html"><strong aria-hidden="true">3.</strong> Blocks</a></li><li class="chapter-item expanded "><a href="statements.html"><strong aria-hidden="true">4.</strong> Statements</a></li><li class="chapter-item expanded "><a href="identifier-policy.html"><strong aria-hidden="true">5.</strong> Identifier Policy</a></li><li class="chapter-item expanded "><a href="variables.html"><strong aria-hidden="true">6.</strong> Variables</a></li><li class="chapter-item expanded "><a href="typing.html"><strong aria-hidden="true">7.</strong> Typing</a></li><li class="chapter-item expanded "><a href="loops.html"><strong aria-hidden="true">8.</strong> Loops</a></li><li class="chapter-item expanded "><a href="conditional-branching.html"><strong aria-hidden="true">9.</strong> Conditional Branching</a></li><li class="chapter-item expanded "><a href="expressions.html"><strong aria-hidden="true">10.</strong> Expressions</a></li><li class="chapter-item expanded "><a href="functions.html"><strong aria-hidden="true">11.</strong> Functions</a></li><li class="chapter-item expanded "><a href="errors.html"><strong aria-hidden="true">12.</strong> Errors</a></li><li class="chapter-item expanded "><a href="comments.html"><strong aria-hidden="true">13.</strong> Comments</a></li><li class="chapter-item expanded "><a href="primitive-types.html"><strong aria-hidden="true">14.</strong> Primitive types</a></li><li class="chapter-item expanded "><a href="operators.html"><strong aria-hidden="true">15.</strong> Operators</a></li><li class="chapter-item expanded "><a href="classes.html"><strong aria-hidden="true">16.</strong> Classes</a></li><li class="chapter-item expanded "><a href="modules.html"><strong aria-hidden="true">17.</strong> Modules</a></li><li class="chapter-item expanded "><a href="build-system.html"><strong aria-hidden="true">18.</strong> Build system</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="walter.html"><strong aria-hidden="true">18.1.</strong> Walter</a></li><li class="chapter-item expanded "><a href="jesse.html"><strong aria-hidden="true">18.2.</strong> Jesse</a></li></ol></li><li class="chapter-item expanded "><a href="standard-library.html"><strong aria-hidden="true">19.</strong> Standard library</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">Specification</li><li class="chapter-item expanded "><a href="document-conventions.html"><strong aria-hidden="true">2.</strong> Document Conventions</a></li><li class="chapter-item expanded "><a href="blocks.html"><strong aria-hidden="true">3.</strong> Blocks</a></li><li class="chapter-item expanded "><a href="statements.html"><strong aria-hidden="true">4.</strong> Statements</a></li><li class="chapter-item expanded "><a href="identifier-policy.html"><strong aria-hidden="true">5.</strong> Identifier Policy</a></li><li class="chapter-item expanded "><a href="variables.html"><strong aria-hidden="true">6.</strong> Variables</a></li><li class="chapter-item expanded "><a href="typing.html"><strong aria-hidden="true">7.</strong> Typing</a></li><li class="chapter-item expanded "><a href="loops.html"><strong aria-hidden="true">8.</strong> Loops</a></li><li class="chapter-item expanded "><a href="conditional-branching.html"><strong aria-hidden="true">9.</strong> Conditional Branching</a></li><li class="chapter-item expanded "><a href="expressions.html"><strong aria-hidden="true">10.</strong> Expressions</a></li><li class="chapter-item expanded "><a href="functions.html"><strong aria-hidden="true">11.</strong> Functions</a></li><li class="chapter-item expanded "><a href="errors.html"><strong aria-hidden="true">12.</strong> Errors</a></li><li class="chapter-item expanded "><a href="comments.html"><strong aria-hidden="true">13.</strong> Comments</a></li><li class="chapter-item expanded "><a href="types.html"><strong aria-hidden="true">14.</strong> Types</a></li><li class="chapter-item expanded "><a href="operators.html"><strong aria-hidden="true">15.</strong> Operators</a></li><li class="chapter-item expanded "><a href="classes.html"><strong aria-hidden="true">16.</strong> Classes</a></li><li class="chapter-item expanded "><a href="modules.html"><strong aria-hidden="true">17.</strong> Modules</a></li><li class="chapter-item expanded "><a href="build-system.html"><strong aria-hidden="true">18.</strong> Build system</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="walter.html"><strong aria-hidden="true">18.1.</strong> Walter</a></li><li class="chapter-item expanded "><a href="jesse.html"><strong aria-hidden="true">18.2.</strong> Jesse</a></li></ol></li><li class="chapter-item expanded "><a href="standard-library.html"><strong aria-hidden="true">19.</strong> Standard library</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -248,9 +248,8 @@ te xt  # This is invalid ❌
 </li>
 <li>
 <p><code>DECLARATION</code></p>
-<p><code>&lt;IDENT&gt; damn &lt;TYPE&gt;</code>, or</p>
-<p><code>&lt;IDENT&gt;</code> (Without type annotations)</p>
-<p>Where type is <code>&lt;IDENT&gt;(&lt;IDENT...&gt;)?</code> where the paranthesised <code>&lt;IDENT&gt;</code> is a generic parameter. Everything in parantheses are optional and the list is separated and terminated by commas.</p>
+<p><code>&lt;IDENT&gt; damn &lt;TYPE&gt;</code></p>
+<p>More info about types is available <a href="./typing.html">here</a>.</p>
 <p><strong>Example</strong></p>
 <pre><code class="language-redditlang">identifier damn Number(x damn Number,)
 </code></pre>
@@ -262,17 +261,17 @@ te xt  # This is invalid ❌
 <p>A name within chevrons (<code>&lt; &gt;</code>), and suffixed by horizontal ellipses (<code>...</code>) refers to the below:</p>
 <ul>
 <li><code>&lt;IDENT...&gt;</code>
-An arbitrary number of arguments is allowed, based on requirements.</li>
+An arbitrary ( at least one ) number of <code>IDENT</code> is allowed, based on requirements.</li>
 </ul>
 <p>A token suffixed by a question mark (<code>?</code>) refers to the below:</p>
 <ul>
 <li>
 <p><code>&lt;IDENT&gt;?</code>
-An argument is optional.</p>
+An <code>IDENT</code> is optional.</p>
 </li>
 <li>
 <p><code>&lt;IDENT...&gt;?</code>
-An arbitrary number of arguments is allowed, including 0.</p>
+An arbitrary number of <code>IDENT</code> is allowed, including 0.</p>
 </li>
 <li>
 <p><code>(&lt;IDENT...&gt;)?</code>
@@ -284,9 +283,11 @@ Parantheses and everything within are optional.</p>
 <ul>
 <li>
 <p>Blocks are created by curly braces.</p>
-<p><strong>Example</strong></p>
+</li>
+<li>
+<p>Standard form</p>
 <pre><code class="language-redditlang">{ # This is a block
-  # Statements can appear within a black
+  # Statements can appear within a block
 } # This terminates the block
 </code></pre>
 </li>
@@ -319,43 +320,65 @@ statement_five; statement_six # This is also invalid.
 <div style="break-before: page; page-break-before: always;"></div><h1 id="identifier-policy"><a class="header" href="#identifier-policy">Identifier Policy</a></h1>
 <ul>
 <li>All <code>&lt;IDENT&gt;</code>'s will have a max length of 25 characters.</li>
-<li>If violated, an <a href="./errors.html"><code>AntiJavaException</code></a> bullet will be shot.</li>
+<li>If violated, an <a href="./errors.html"><code>AntiJavaException</code></a> bullet will be shot. <!-- TODO --></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="variables"><a class="header" href="#variables">Variables</a></h1>
 <p>The variable creation keyword is <code>meth</code>.</p>
 <p>They can ony be defined at the top level of modules, or in blocks.</p>
 <p>An initializer is required.</p>
 <p>Standard form:</p>
-<pre><code class="language-redditlang">meth &lt;IDENT&gt; ∑ &lt;EXPR&gt;
+<pre><code class="language-redditlang">meth &lt;DECLERATION&gt; ∑ &lt;EXPR&gt;
 </code></pre>
 <p>Variables are scope-local and shadow previous variables with the same name.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="typing"><a class="header" href="#typing">Typing</a></h1>
-<p>Typing a variable or a function type is optional, they act as comments and are only static and runtime errors.</p>
-<p>Array access</p>
+<p>Typing a variable or a function type is not optional.</p>
+<h2 id="arrays"><a class="header" href="#arrays">Arrays</a></h2>
+<p>To type array's, you use the generic <code>T &gt;&gt; Array</code> type </p>
 <ul>
 <li>
 <p>Standard form:</p>
-<pre><code class="language-redditlang">&lt;TYPE&gt;[]
+<pre><code class="language-redditlang">&lt;TYPE&gt; &gt;&gt; Array
 </code></pre>
 </li>
 </ul>
+<h2 id="flat-types"><a class="header" href="#flat-types">Flat types</a></h2>
+<ul>
+<li>
+<p>Standard form:</p>
+<pre><code class="language-redditlang">&lt;TYPE&gt;
+</code></pre>
+</li>
+</ul>
+<h2 id="generics"><a class="header" href="#generics">Generics</a></h2>
+<ul>
+<li>
+<p>Standard form:</p>
+<pre><code class="language-redditlang">(&lt;TYPE,...&gt;) &gt;&gt; &lt;TYPE&gt;
+</code></pre>
+</li>
+</ul>
+<h2 id="related-pages"><a class="header" href="#related-pages">Related Pages</a></h2>
+<p><a href="./types.html">Types</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="loops"><a class="header" href="#loops">Loops</a></h1>
 <ul>
 <li>
-<p>Loops do not self-terminate.</p>
+<p>Loops are infinite, they do not self-terminate ( terminate without a break ).</p>
 </li>
 <li>
-<p>The loops follow <a href="https://doc.rust-lang.org/reference/expressions/loop-expr.html#infinite-loops">Rust's syntax</a>.</p>
+<p>The loop are simmilar to <a href="https://doc.rust-lang.org/reference/expressions/loop-expr.html#infinite-loops">Rust's syntax</a>.</p>
 </li>
 <li>
 <p>The loop keyword is <code>repeatdatshid</code>.</p>
 </li>
 <li>
-<p>The break keyword is <code>sthu</code>.
-Standard form:</p>
+<p>The break keyword is <code>sthu</code>.</p>
+</li>
+<li>
+<p>Standard form:</p>
 <pre><code class="language-redditlang">repeatdatshid { # Opens a loop
-  # Code to execute
-  sthu # Breks the loop
+  # ...
+  sthu # Breaks the loop
+  # ...
 }
 </code></pre>
 </li>
@@ -424,18 +447,10 @@ Standard form:</p>
 </ul>
 <h3 id="index"><a class="header" href="#index">Index</a></h3>
 <ul>
-<li>One of the following
-<ul>
-<li>BinaryExpr</li>
-<li>UNumber</li>
-<li>String</li>
-<li>Ident</li>
-<li>(Index)</li>
-</ul>
-</li>
+<li>An <code>Expr -&gt; UNumber | String | Ident</code></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="functions"><a class="header" href="#functions">Functions</a></h1>
-<p>Function Declaration</p>
+<h2 id="function-declaration"><a class="header" href="#function-declaration">Function Declaration</a></h2>
 <ul>
 <li>
 <p>The declare keyword is <code>callmeonmycellphone</code>.</p>
@@ -447,8 +462,11 @@ Standard form:</p>
 <p>They can optionally include a modifier and an arbitrary number of arguments.</p>
 </li>
 <li>
+<p><strong>All</strong> arguments, last one or not, will end with a comma.</p>
+</li>
+<li>
 <p>Standard form:</p>
-<pre><code class="language-redditlang">&lt;FUNCTION_MOD...&gt; callmeonmycellphone &lt;DECLARATION&gt;(&lt;DECLARATION...&gt;?) {
+<pre><code class="language-redditlang">&lt;FUNCTION_MOD...&gt; callmeonmycellphone &lt;DECLARATION&gt;(&lt;DECLARATION,...&gt;) {
   # Block
 }
 </code></pre>
@@ -468,19 +486,21 @@ Standard form:</p>
 </ul>
 </li>
 </ul>
-<p>Function Calls</p>
+<h2 id="function-calls"><a class="header" href="#function-calls">Function Calls</a></h2>
 <ul>
+<li>
+<p><strong>All</strong> arguments, last one or not, will end with a comma.</p>
+</li>
 <li>
 <p>The call keyword is <code>call</code>.</p>
 </li>
 <li>
 <p>Standard form:</p>
-<pre><code class="language-redditlang">call &lt;IDENT&gt;(&lt;EXPR...&gt;?)
+<pre><code class="language-redditlang">call &lt;IDENT&gt;(&lt;EXPR,...&gt;?)
 </code></pre>
-<p>where <code>(&lt;EXPR...&gt;?)</code> is a comma separated list of expressions.</p>
 </li>
 </ul>
-<p>Function returns</p>
+<h2 id="function-returns"><a class="header" href="#function-returns">Function returns</a></h2>
 <ul>
 <li>
 <p>The return keyword is <code>spez</code>.</p>
@@ -535,7 +555,14 @@ Standard form:</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="comments"><a class="header" href="#comments">Comments</a></h1>
 <p>Single line comments are prefixed by <code>#</code>.</p>
 <p>Multi-line comments are prefixed by <code>#*</code> and suffixed by <code>*#</code>.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="primitive-types"><a class="header" href="#primitive-types">Primitive types</a></h1>
+<p>Standard form</p>
+<pre><code class="language-redditlang"># Single line
+
+#* Multi
+   Line
+*#
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="types"><a class="header" href="#types">Types</a></h1>
 <h2 id="boolean"><a class="header" href="#boolean">Boolean</a></h2>
 <div class="table-wrapper"><table><thead><tr><th>Varient</th><th>Meaning</th></tr></thead><tbody>
 <tr><td><code>Yup</code></td><td>True</td></tr>
@@ -575,9 +602,18 @@ Standard form:</p>
 <ul>
 <li>The null keyword is <code>wat</code>.</li>
 </ul>
-<h2 id="arrays"><a class="header" href="#arrays">Arrays</a></h2>
+<h2 id="arrays-1"><a class="header" href="#arrays-1">Arrays</a></h2>
 <ul>
-<li>Array types are suffixed by the <code>[]</code> token.</li>
+<li>
+<p>Arrays are declared with brackets and have comma seperated expressions inside.</p>
+</li>
+<li>
+<p>Standard form:</p>
+</li>
+</ul>
+<pre><code class="language-redditlang">[&lt;EXPR,...&gt;]
+</code></pre>
+<ul>
 <li>Array indexes start with <code>1</code>.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="operators"><a class="header" href="#operators">Operators</a></h1>
@@ -597,6 +633,7 @@ Standard form:</p>
 <li>The multiplication binary operator is <code>⋇</code></li>
 <li>The XOR binary operator is <code>⊕</code></li>
 <li>The division binary operator is <code>⎲</code></li>
+<li>The modulus binary operator is <code>⨊</code></li>
 </ul>
 <h2 id="unary"><a class="header" href="#unary">Unary</a></h2>
 <ul>
@@ -609,6 +646,9 @@ Standard form:</p>
 <li>The assignment operator is <code>∑</code></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="classes"><a class="header" href="#classes">Classes</a></h1>
+<blockquote>
+<p>Not implemented in the compiler yet</p>
+</blockquote>
 <p>The class definition keyword is <code>school</code>.</p>
 <p>Standard form:</p>
 <pre><code class="language-redditlang">school &lt;IDENT&gt; {
@@ -638,39 +678,36 @@ The destructor member function name is <code>snoRt</code>.</p>
 <p>Importing modules</p>
 <ul>
 <li>
-<p>The import keyword is <code>weneed</code>, or <code>bringme</code>.</p>
+<p>The import directive is <code>weneed</code>, or <code>bringme</code>.</p>
 </li>
 <li>
-<p><code>weneed</code> and <code>bringme</code> are functionally equivalent.</p>
+<p><code>weneed</code> and <code>bringme</code> are equivalent.</p>
 </li>
 <li>
-<p>A module name must be specified after the keyword in quotes.</p>
+<p>The module path is a dot seperated list of <code>&lt;IDENT&gt;</code>.</p>
 </li>
 <li>
 <p>Standard form:</p>
-<pre><code class="language-redditlang">weneed &quot;&lt;MODULE_NAME&gt;&quot;
+<pre><code class="language-redditlang">weneed &quot;&lt;MODULE_PATH&gt;&quot;
 </code></pre>
 <p>or,</p>
-<pre><code class="language-redditlang">bringme &quot;&lt;MODULE_NAME&gt;&quot;
+<pre><code class="language-redditlang">bringme &quot;&lt;MODULE_PATH&gt;&quot;
 </code></pre>
 </li>
 </ul>
 <p>Creating modules</p>
 <ul>
-<li>
-<p>The module definition keyword is <code>subreddit</code>.</p>
-</li>
-<li>
-<p>An <code>r/</code> must exist in front of the module name. It must not appear within the module name.</p>
-</li>
-<li>
-<p>The <code>subreddit</code> keyword can only appear once, at the top of each file.</p>
-</li>
-<li>
-<p>Standard form:</p>
-<pre><code class="language-redditlang">subreddit r/&lt;MODULE_NAME&gt;
+<li>Modules are created from the filesystem</li>
+<li>For example</li>
+</ul>
+<pre><code class="language-txt">main.rl
+a.rl
+b/
+  b.rl
+  c.rl
 </code></pre>
-</li>
+<ul>
+<li>The module paths for this are <code>r/main r/a r/b.b r/b.c</code></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="build-system"><a class="header" href="#build-system">Build system</a></h1>
 <p>The build system is <code>walter</code>.<br />
@@ -694,51 +731,17 @@ The standard debugger is <code>jesse</code>.</p>
 version: &lt;SEMVER_VERSION_NUMBER&gt;
 </code></pre>
 <h2 id="cli-documentation"><a class="header" href="#cli-documentation">CLI Documentation</a></h2>
-<p>You can also run <code>walter help &lt;COMMAND&gt;</code> to see info about a specific command, or to see info about the entire program. You can add <code>--help</code> or <code>-h</code> to get help aswell.
-To print the version run <code>walter -V</code> or <code>walter --version</code></p>
-<p>walter <code>&lt;COMMAND&gt;</code></p>
-<ul>
-<li>
-<p><code>cook [OPTIONS]</code> <strong>Builds a program</strong></p>
-<p><strong>Options</strong></p>
-<ul>
-<li><code>-r</code>, <code>--release</code> Enables release mode, longer build but more optimizations</li>
-<li><code>-a</code>, <code>--assembly</code> Compiles LLVM to an assembly file instead of an object file before linking</li>
-<li><code>-n</code>, <code>--no-std</code> Does not link the standard library</li>
-</ul>
-</li>
-<li>
-<p><code>serve [OPTIONS] [ARGS]...</code> <strong>Builds and runs a program</strong></p>
-<p><strong>Arguments</strong></p>
-<ul>
-<li><code>[ARGS]...</code> Optional arguments to pass to the program</li>
-</ul>
-<p><strong>Options</strong></p>
-<ul>
-<li><code>-r</code>, <code>--release</code> Enables release mode, longer build but more optimizations</li>
-<li><code>-a</code>, <code>--assembly</code> Compiles LLVM to an assembly file instead of an object file before linking</li>
-<li><code>-n</code>, <code>--no-std</code> Does not link the standard library</li>
-<li><code>-s</code>, <code>--show-ir</code> Shows the LLVM IR when compiling</li>
-</ul>
-</li>
-<li>
-<p><code>clean</code> <strong>Removes build dir</strong></p>
-</li>
-<li>
-<p><code>rise [NAME]</code> <strong>Creates a new walter project</strong></p>
-<p><strong>Arguments</strong></p>
-<ol>
-<li><code>[NAME]</code> If you don't specify a name it is created in the current directory with the current directories name if it is empty</li>
-</ol>
-</li>
-</ul>
+<p>Run <code>walter help &lt;COMMAND?&gt;</code> to see info about a specific command, or to see info about the entire program. You can add <code>--help</code> or <code>-h</code> to get help aswell.</p>
+<blockquote>
+<p>There used to be a documentation here, but it was not up to date and became a hassle to update. Please refer to the cli instead.</p>
+</blockquote>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="jesse"><a class="header" href="#jesse">Jesse</a></h1>
 <blockquote>
 <p>INCOMPLETE</p>
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="standard-library"><a class="header" href="#standard-library">Standard library</a></h1>
-<p>The standard library is imported by default.
-It is available at <a href="https://github.com/elijah629/redditlang-stl">https://github.com/elijah629/redditlang-stl</a></p>
+<p>The standard library is globally available by default.
+It is available at <a href="https://github.com/elijah629/redditlang-std">https://github.com/elijah629/redditlang-std</a></p>
 <h2 id="io"><a class="header" href="#io">I/O</a></h2>
 <ul>
 <li>
@@ -767,6 +770,25 @@ It is available at <a href="https://github.com/elijah629/redditlang-stl">https:/
 <p>Function signature:</p>
 <pre><code class="language-redditlang">call String pulloutnt()
 </code></pre>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="system"><a class="header" href="#system">System</a></h2>
+<ul>
+<li>
+<p><code>exit</code></p>
+<ul>
+<li>
+<p>Standard exit function</p>
+</li>
+<li>
+<p>Function signature:</p>
+<pre><code class="language-redditlang">call exit(code damn Number)
+</code></pre>
+</li>
+<li>
+<p>Decimal codes are truncated</p>
 </li>
 </ul>
 </li>
@@ -825,6 +847,7 @@ It is available at <a href="https://github.com/elijah629/redditlang-stl">https:/
         <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
+        <script src="theme/redditlang.js"></script>
 
         <script>
         window.addEventListener('load', function() {

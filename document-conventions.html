@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">Specification</li><li class="chapter-item expanded "><a href="document-conventions.html" class="active"><strong aria-hidden="true">2.</strong> Document Conventions</a></li><li class="chapter-item expanded "><a href="blocks.html"><strong aria-hidden="true">3.</strong> Blocks</a></li><li class="chapter-item expanded "><a href="statements.html"><strong aria-hidden="true">4.</strong> Statements</a></li><li class="chapter-item expanded "><a href="identifier-policy.html"><strong aria-hidden="true">5.</strong> Identifier Policy</a></li><li class="chapter-item expanded "><a href="variables.html"><strong aria-hidden="true">6.</strong> Variables</a></li><li class="chapter-item expanded "><a href="typing.html"><strong aria-hidden="true">7.</strong> Typing</a></li><li class="chapter-item expanded "><a href="loops.html"><strong aria-hidden="true">8.</strong> Loops</a></li><li class="chapter-item expanded "><a href="conditional-branching.html"><strong aria-hidden="true">9.</strong> Conditional Branching</a></li><li class="chapter-item expanded "><a href="expressions.html"><strong aria-hidden="true">10.</strong> Expressions</a></li><li class="chapter-item expanded "><a href="functions.html"><strong aria-hidden="true">11.</strong> Functions</a></li><li class="chapter-item expanded "><a href="errors.html"><strong aria-hidden="true">12.</strong> Errors</a></li><li class="chapter-item expanded "><a href="comments.html"><strong aria-hidden="true">13.</strong> Comments</a></li><li class="chapter-item expanded "><a href="primitive-types.html"><strong aria-hidden="true">14.</strong> Primitive types</a></li><li class="chapter-item expanded "><a href="operators.html"><strong aria-hidden="true">15.</strong> Operators</a></li><li class="chapter-item expanded "><a href="classes.html"><strong aria-hidden="true">16.</strong> Classes</a></li><li class="chapter-item expanded "><a href="modules.html"><strong aria-hidden="true">17.</strong> Modules</a></li><li class="chapter-item expanded "><a href="build-system.html"><strong aria-hidden="true">18.</strong> Build system</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="walter.html"><strong aria-hidden="true">18.1.</strong> Walter</a></li><li class="chapter-item expanded "><a href="jesse.html"><strong aria-hidden="true">18.2.</strong> Jesse</a></li></ol></li><li class="chapter-item expanded "><a href="standard-library.html"><strong aria-hidden="true">19.</strong> Standard library</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">Specification</li><li class="chapter-item expanded "><a href="document-conventions.html" class="active"><strong aria-hidden="true">2.</strong> Document Conventions</a></li><li class="chapter-item expanded "><a href="blocks.html"><strong aria-hidden="true">3.</strong> Blocks</a></li><li class="chapter-item expanded "><a href="statements.html"><strong aria-hidden="true">4.</strong> Statements</a></li><li class="chapter-item expanded "><a href="identifier-policy.html"><strong aria-hidden="true">5.</strong> Identifier Policy</a></li><li class="chapter-item expanded "><a href="variables.html"><strong aria-hidden="true">6.</strong> Variables</a></li><li class="chapter-item expanded "><a href="typing.html"><strong aria-hidden="true">7.</strong> Typing</a></li><li class="chapter-item expanded "><a href="loops.html"><strong aria-hidden="true">8.</strong> Loops</a></li><li class="chapter-item expanded "><a href="conditional-branching.html"><strong aria-hidden="true">9.</strong> Conditional Branching</a></li><li class="chapter-item expanded "><a href="expressions.html"><strong aria-hidden="true">10.</strong> Expressions</a></li><li class="chapter-item expanded "><a href="functions.html"><strong aria-hidden="true">11.</strong> Functions</a></li><li class="chapter-item expanded "><a href="errors.html"><strong aria-hidden="true">12.</strong> Errors</a></li><li class="chapter-item expanded "><a href="comments.html"><strong aria-hidden="true">13.</strong> Comments</a></li><li class="chapter-item expanded "><a href="types.html"><strong aria-hidden="true">14.</strong> Types</a></li><li class="chapter-item expanded "><a href="operators.html"><strong aria-hidden="true">15.</strong> Operators</a></li><li class="chapter-item expanded "><a href="classes.html"><strong aria-hidden="true">16.</strong> Classes</a></li><li class="chapter-item expanded "><a href="modules.html"><strong aria-hidden="true">17.</strong> Modules</a></li><li class="chapter-item expanded "><a href="build-system.html"><strong aria-hidden="true">18.</strong> Build system</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="walter.html"><strong aria-hidden="true">18.1.</strong> Walter</a></li><li class="chapter-item expanded "><a href="jesse.html"><strong aria-hidden="true">18.2.</strong> Jesse</a></li></ol></li><li class="chapter-item expanded "><a href="standard-library.html"><strong aria-hidden="true">19.</strong> Standard library</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -185,9 +185,8 @@ te xt  # This is invalid ❌
 </li>
 <li>
 <p><code>DECLARATION</code></p>
-<p><code>&lt;IDENT&gt; damn &lt;TYPE&gt;</code>, or</p>
-<p><code>&lt;IDENT&gt;</code> (Without type annotations)</p>
-<p>Where type is <code>&lt;IDENT&gt;(&lt;IDENT...&gt;)?</code> where the paranthesised <code>&lt;IDENT&gt;</code> is a generic parameter. Everything in parantheses are optional and the list is separated and terminated by commas.</p>
+<p><code>&lt;IDENT&gt; damn &lt;TYPE&gt;</code></p>
+<p>More info about types is available <a href="./typing.html">here</a>.</p>
 <p><strong>Example</strong></p>
 <pre><code class="language-redditlang">identifier damn Number(x damn Number,)
 </code></pre>
@@ -199,17 +198,17 @@ te xt  # This is invalid ❌
 <p>A name within chevrons (<code>&lt; &gt;</code>), and suffixed by horizontal ellipses (<code>...</code>) refers to the below:</p>
 <ul>
 <li><code>&lt;IDENT...&gt;</code>
-An arbitrary number of arguments is allowed, based on requirements.</li>
+An arbitrary ( at least one ) number of <code>IDENT</code> is allowed, based on requirements.</li>
 </ul>
 <p>A token suffixed by a question mark (<code>?</code>) refers to the below:</p>
 <ul>
 <li>
 <p><code>&lt;IDENT&gt;?</code>
-An argument is optional.</p>
+An <code>IDENT</code> is optional.</p>
 </li>
 <li>
 <p><code>&lt;IDENT...&gt;?</code>
-An arbitrary number of arguments is allowed, including 0.</p>
+An arbitrary number of <code>IDENT</code> is allowed, including 0.</p>
 </li>
 <li>
 <p><code>(&lt;IDENT...&gt;)?</code>
@@ -264,6 +263,7 @@ Parantheses and everything within are optional.</p>
         <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
+        <script src="theme/redditlang.js"></script>
 
 
     </div>
