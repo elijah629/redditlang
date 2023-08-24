@@ -7,8 +7,11 @@ use crate::{
     utils::Result,
 };
 use inkwell::{
-    basic_block::BasicBlock, builder::Builder, context::Context, module::Module,
-    values::{PointerValue, FunctionValue},
+    basic_block::BasicBlock,
+    builder::Builder,
+    context::Context,
+    module::Module,
+    values::{FunctionValue, PointerValue},
 };
 
 pub mod compile_node;
@@ -39,7 +42,7 @@ pub struct LoopMetadata<'a> {
 pub struct CompileMetadata<'a> {
     pub r#loop: Option<LoopMetadata<'a>>,
     pub function_scope: Scope<'a>,
-    pub fn_value: FunctionValue<'a>
+    pub fn_value: FunctionValue<'a>,
 }
 
 pub fn compile<'a>(
@@ -48,7 +51,8 @@ pub fn compile<'a>(
     compile_meta: &mut CompileMetadata<'a>,
 ) -> Result<()> {
     for node in tree {
-        if !matches!(node, Node::EOI) {
+        // these cannot be compiled
+        if !matches!(node, Node::EOI | Node::Import(..)) {
             compile_one(&compiler, &node, compile_meta)?;
         }
     }
@@ -64,6 +68,8 @@ pub fn compile_one<'a>(
         Node::EOI => unreachable!(), // EOI is skipped above
         Node::Expr(_) => bug!("Expected statement, got an expression, COMPILE_EXPRESSION"),
 
+        Node::Import(_) => unreachable!(), // import is a compiler directive
+
         Node::Variable(x) => x,
         Node::Assignment(x) => x,
 
@@ -72,9 +78,7 @@ pub fn compile_one<'a>(
 
         Node::Function(_) => todo!(),
         Node::Call(call) => todo!(),
-        Node::Import(_) => todo!(),
         Node::Throw(_) => todo!(),
-        Node::Module(_) => todo!(),
         Node::TryCatch(_) => todo!(),
         Node::If(r#if) => todo!(),
         Node::Class(_) => todo!(),

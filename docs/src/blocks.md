@@ -5,6 +5,6 @@
 
   ```redditlang
   { # This is a block
-    # Statements can appear within a black
+    # Statements can appear within a block
   } # This terminates the block
   ```

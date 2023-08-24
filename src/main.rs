@@ -12,8 +12,9 @@ use colored::Colorize;
 use git::generate;
 use inkwell::{
     context::Context,
+    module::Module,
     targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine},
-    OptimizationLevel, module::Module,
+    OptimizationLevel,
 };
 use parser::{parse, Tree};
 use pest::Parser as PestParser;
@@ -236,96 +237,144 @@ fn cook(
 
     log::info!("Building module tree");
 
-    fn get_all_module_trees(tree: &Tree) -> Result<HashMap<String, Tree>> {
-        let mut mods = HashMap::new();
+    /// Collects every created module and canocalizes the path
+    /// parent_module_path is the module path of the modules parent,
+    /// ex if the full module file path is a.b.c, this should be a.b
+    /// base_path is the FS path where main.rl is located
+    fn get_all_modules<P: AsRef<Path>>(
+        tree: &Tree,
+        src_dir: P,
+    ) -> Result<HashMap<PathBuf, Tree>> {
+        fn recursive(
+            tree: &Tree,
+            parent_module_path: &Path,
+            base_path: &Path,
+            imports: &mut HashMap<PathBuf, Tree>,
+        ) -> Result<()> {
+            for node in tree {
+                match node {
+                    parser::Node::Import(import) => {
+                        // base_path + parent_module_path + import.0 + ".rl" = path to file
+                        let module_path = parent_module_path.join(&import.0);
+                        let file_path = base_path
+                            .clone()
+                            .to_path_buf()
+                            .join(module_path.with_extension("rl"));
 
-        for node in tree {
-            match node {
-                parser::Node::Import(import) => {
-                    let path = &import.path;
-                    let tree = parse_file(&path)?;
-                    mods.extend(get_all_module_trees(&tree)?);
-                    mods.insert(path.to_string(), tree);
+                        let file_contents = fs::read_to_string(&file_path)?;
+
+                        if !imports.contains_key(&module_path) {
+                            let tree = parse_file(&file_contents)?;
+
+                            imports.insert(module_path, tree.clone());
+                            recursive(&tree, parent_module_path, base_path, imports)?;
+                        }
+                    }
+                    _ => (),
                 }
-                // parser::Node::Module(_) => todo!(),
-                _ => (),
             }
-        }
 
-        Ok(mods)
+            Ok(())
+        }
+        let mut imports = HashMap::new();
+        recursive(&tree, "".as_ref(), &src_dir.as_ref(), &mut imports)?;
+        Ok(imports)
     }
 
-    // 1. recursively navigate tree, following all imports. returns a Vec<Tree> with no duplicates
+    // 1. recursively navigate tree, following all imports.
     // 2. compile each tree
     // 3. link all modules together
 
-    let mut trees = get_all_module_trees(&tree)?;
-    trees.insert("main".to_string(), tree);
+    let mut trees = get_all_modules(&tree, &src_dir)?;
+    trees.insert(PathBuf::from("main"), tree);
 
-    log::info!("Compiling {} {}", trees.len().to_string().bold(), if trees.len() == 1 { "tree" } else { "trees" });
+    log::info!(
+        "Compiling {} {}",
+        trees.len().to_string().bold(),
+        if trees.len() == 1 { "tree" } else { "trees" }
+    );
 
     let context = Context::create();
     let builder = context.create_builder();
 
-    let combined_module = trees.into_iter().map(|(name, tree)| {
-        let module = context.create_module(&name);
-        let compiler = Compiler {
-            context: &context,
-            module,
-            builder: &builder,
-        };
+    let combined_module = trees
+        .into_iter()
+        .map(|(name, tree)| {
+            let name = name
+                .components()
+                .map(|x| x.as_os_str().to_str().unwrap())
+                .collect::<Vec<_>>()
+                .join(".");
 
-        define_libstd(&compiler);
+            let module = context.create_module(&name);
+            let compiler = Compiler {
+                context: &context,
+                module,
+                builder: &builder,
+            };
 
-        let compiler = &compiler;
-        let main_type = compiler.context.i32_type().fn_type(&[], false);
-        let main_fn = compiler.module.add_function("main", main_type, None);
+            define_libstd(&compiler);
 
-        let entry_basic_block = compiler.context.append_basic_block(main_fn, "");
-        compiler.builder.position_at_end(entry_basic_block);
+            let compiler = &compiler;
+            let main_type = compiler.context.i32_type().fn_type(&[], false);
+            let main_fn = compiler.module.add_function(
+                if name == "main" {
+                    "main".to_string()
+                } else {
+                    format!("{}.main", &name)
+                }
+                .as_str(),
+                main_type,
+                None,
+            );
 
-        compile(
-            &compiler,
-            &tree,
-            &mut CompileMetadata {
-                r#loop: None,
-                fn_value: main_fn,
-                function_scope: Scope {
-                    variables: HashMap::new(),
+            let entry_basic_block = compiler.context.append_basic_block(main_fn, "");
+            compiler.builder.position_at_end(entry_basic_block);
+
+            compile(
+                &compiler,
+                &tree,
+                &mut CompileMetadata {
+                    r#loop: None,
+                    fn_value: main_fn,
+                    function_scope: Scope {
+                        variables: HashMap::new(),
+                    },
                 },
-            },
-        )?;
+            )?;
 
-        // Add return
-        compiler
-            .builder
-            .build_return(Some(&compiler.context.i32_type().const_zero()));
+            // Add return
+            compiler
+                .builder
+                .build_return(Some(&compiler.context.i32_type().const_zero()));
 
-        let module_name = &compiler.module.get_name().to_str()?;
-        if print_ir {
-            println!("Module: {}", module_name.bold());
-            println!("{}", &compiler.module.print_to_string().to_str().unwrap());
-        }
-
-        // LLVM errors
-        if let Err(x) = compiler.module.verify() {
-            log::error!("│ Module verification for {} failed", module_name.bold());
-            let lines: Vec<&str> = x.to_str().unwrap().lines().collect();
-            for line in &lines[0..lines.len() - 1] {
-                log::error!("│  {}", line);
+            let module_name = &compiler.module.get_name().to_str()?;
+            if print_ir {
+                println!("Module: {}", module_name.bold());
+                println!("{}", &compiler.module.print_to_string().to_str().unwrap());
             }
-            error!("└─ {}\n", lines.last().unwrap());
-        };
 
-        Ok(compiler.module.clone())
-    }).reduce(|a: Result<Module<'_>>, c| {
-        let a = a?;
-        let c = c?;
+            // LLVM errors
+            if let Err(x) = compiler.module.verify() {
+                log::error!("│ Module verification for {} failed", module_name.bold());
+                let lines: Vec<&str> = x.to_str().unwrap().lines().collect();
+                for line in &lines[0..lines.len() - 1] {
+                    log::error!("│  {}", line);
+                }
+                error!("└─ {}\n", lines.last().unwrap());
+            };
 
-        c.link_in_module(a)?;
+            Ok(compiler.module.clone())
+        })
+        .reduce(|a: Result<Module<'_>>, c| {
+            let a = a?;
+            let c = c?;
 
-        Ok(c)
-    }).unwrap()?;
+            c.link_in_module(a)?;
+
+            Ok(c)
+        })
+        .unwrap()?;
 
     // TODO: allow user chosen targets
     Target::initialize_x86(&InitializationConfig::default());

@@ -1,9 +1,11 @@
+use std::path::PathBuf;
+
 use crate::errors::syntax_error;
 use crate::parser::{
     parse, parse_one, Assignment, BinaryExpr, BinaryExprTerm, Break, Call, Catch, Class,
     ConditionExprTerm, ConditionalExpr, ConditionalOperator, Declaration, Else, Expr, Function,
     FunctionMod, Ident, IfBlock, IfCase, IfNode, Import, Index, IndexExpr, Loop, MathOperator,
-    Module, Node, Number, Return, Term, Throw, Tree, Try, TryCatch, Type, Variable, VariableMod,
+    Node, Number, Return, Term, Throw, Tree, Try, TryCatch, Type, Variable, VariableMod,
 };
 use crate::utils::{is_unique, Result};
 use crate::{bug, Rule};
@@ -143,14 +145,6 @@ impl Parse for Term {
     }
 }
 
-impl Parse for Module {
-    fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
-        let mut inner = pair.into_inner();
-        let ident = Ident::parse_from(inner.next().unwrap()).unwrap();
-        Ok(Self { ident })
-    }
-}
-
 impl Parse for Call {
     fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
@@ -175,30 +169,27 @@ impl Parse for Throw {
     fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
         let value = Expr::parse_from(inner.next().unwrap())?;
-        Ok(Self { value })
+        Ok(Self(value))
     }
 }
 
 impl Parse for Import {
     fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
-        let mut inner = pair.into_inner();
-        let path = Term::parse_from(inner.next().unwrap())?;
+        let idents = pair.into_inner();
+        let components = idents
+            .map(|x| Ident::parse_from(x).map(|x| x.0))
+            .collect::<Result<Vec<_>>>()?;
+        let mut path = PathBuf::new();
+        path.extend(components);
 
-        let path = match path {
-            Term::String(x) => x,
-            _ => bug!("INVALID_IMPORT_TERM({:?})", path)
-        };
-
-        Ok(Self { path })
+        Ok(Self(path))
     }
 }
 
 impl Parse for Loop {
     fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
-        Ok(Self {
-            body: Tree::parse_from(inner.next().unwrap())?,
-        })
+        Ok(Self(Tree::parse_from(inner.next().unwrap())?))
     }
 }
 
@@ -374,7 +365,7 @@ impl Parse for Return {
     fn parse_from(pair: Pair<'_, Rule>) -> Result<Self> {
         let mut inner = pair.into_inner();
         let value = Expr::parse_from(inner.next().unwrap())?;
-        Ok(Self { value })
+        Ok(Self(value))
     }
 }
 

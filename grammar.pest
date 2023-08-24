@@ -16,7 +16,6 @@ Statement  =  {
   | TryCatch
   | Throw
   | Import
-  | Module
   | Variable
   | AssignmentStatement
   | IfBlock
@@ -92,9 +91,8 @@ TryCatch = { Try ~ Catch }
 
 // Modules
 ImportKwd = _{ "weneed" | "bringme" }
-ModuleKwd = _{ "subreddit" }
-Module    =  { ModuleKwd ~ "r/" ~ Ident }
-Import    =  { ImportKwd ~ String }
+ImportPath = _{ Ident ~ ("." ~ Ident)* }
+Import    =  { ImportKwd ~ "r/" ~ ImportPath }
 
 // Modifiers
 AccessibilityModifier = { "bar " }

@@ -1,9 +1,6 @@
-use std::ffi::CString;
-
 use inkwell::{
-    intrinsics::Intrinsic,
     types::BasicTypeEnum,
-    values::{ArrayValue, BasicValueEnum},
+    values::BasicValueEnum,
     AddressSpace,
 };
 
@@ -248,7 +245,7 @@ impl<'a> Compile<'a> for Loop {
             loop_block,
         });
 
-        compile(&compiler, &self.body, compile_meta)?;
+        compile(&compiler, &self.0, compile_meta)?;
 
         compile_meta.r#loop = None;
 

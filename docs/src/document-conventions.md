@@ -22,11 +22,9 @@ A name within chevrons (`< >`) refers to one of these:
 
 - `DECLARATION`
 
-  `<IDENT> damn <TYPE>`, or
+  `<IDENT> damn <TYPE>`
 
-  `<IDENT>` (Without type annotations)
-
-  Where type is `<IDENT>(<IDENT...>)?` where the paranthesised `<IDENT>` is a generic parameter. Everything in parantheses are optional and the list is separated and terminated by commas.
+    More info about types is available [here](./typing.md).
 
   **Example**
 
