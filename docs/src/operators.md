@@ -16,6 +16,7 @@
 - The multiplication binary operator is `⋇`
 - The XOR binary operator is `⊕`
 - The division binary operator is `⎲`
+- The modulus binary operator is `⨊`
 
 ## Unary
 

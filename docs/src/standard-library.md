@@ -1,7 +1,7 @@
 # Standard library
 
-The standard library is imported by default.
-It is available at <https://github.com/elijah629/redditlang-stl>
+The standard library is globally available by default.
+It is available at <https://github.com/elijah629/redditlang-std>
 
 ## I/O
 
@@ -23,6 +23,19 @@ It is available at <https://github.com/elijah629/redditlang-stl>
     ```redditlang
     call String pulloutnt()
     ```
+
+## System
+
+- `exit`
+
+    - Standard exit function
+    - Function signature:
+
+        ```redditlang
+        call exit(code damn Number)
+        ```
+
+    - Decimal codes are truncated
 
 ## Time
 

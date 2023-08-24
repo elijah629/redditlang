@@ -33,10 +33,4 @@ Indexing
   ```
 
 ### Index
-
-- One of the following
-  - BinaryExpr
-  - UNumber
-  - String
-  - Ident
-  - (Index)
+- An `Expr -> UNumber | String | Ident`

@@ -1,4 +1,4 @@
-# Primitive types
+# Types
 
 ## Boolean
 
@@ -44,5 +44,14 @@
 
 ## Arrays
 
-- Array types are suffixed by the `[]` token.
+- Arrays are declared with brackets and have comma seperated expressions inside.
+
+- Standard form:
+
+```redditlang
+[<EXPR,...>]
+```
+
 - Array indexes start with `1`.
+
+

@@ -1,5 +1,7 @@
 # Classes
 
+> Not implemented in the compiler yet
+
 The class definition keyword is `school`.
 
 Standard form:

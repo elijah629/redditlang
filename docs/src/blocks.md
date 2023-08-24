@@ -1,11 +1,10 @@
 # Blocks
 
 - Blocks are created by curly braces.
-
-  **Example**
+- Standard form
 
   ```redditlang
   { # This is a block
-    # Statements can appear within a black
+    # Statements can appear within a block
   } # This terminates the block
   ```

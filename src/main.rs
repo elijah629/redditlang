@@ -12,6 +12,7 @@ use colored::Colorize;
 use git::generate;
 use inkwell::{
     context::Context,
+    module::Module,
     targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine},
     OptimizationLevel,
 };
@@ -21,12 +22,13 @@ use pest_derive::Parser as PestParser;
 use project::Project;
 use semver::Version;
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     env, fs,
     hash::Hash,
     path::{Path, PathBuf},
     process::Command,
 };
+use utils::Result;
 
 pub mod compiler;
 pub mod errors;
@@ -59,13 +61,21 @@ enum Commands {
         #[arg(short, long)]
         assembly: bool,
 
-        /// Does not link the standard library
+        /// Don't link the standard library
         #[arg(short, long)]
         no_std: bool,
 
-        /// Shows the LLVM IR when compiling
+        /// Strip the resulting executable
         #[arg(short, long)]
-        show_ir: bool,
+        strip: bool,
+
+        /// Prints the LLVM IR when compiling
+        #[arg(short = 'i', long)]
+        print_ir: bool,
+
+        /// Prints the AST when parsing
+        #[arg(short = 't', long)]
+        print_ast: bool,
     },
     /// Builds and runs program
     Serve {
@@ -77,13 +87,21 @@ enum Commands {
         #[arg(short, long)]
         assembly: bool,
 
-        /// Does not link the standard library
+        /// Don't link the standard library
         #[arg(short, long)]
         no_std: bool,
 
-        /// Shows the LLVM IR when compiling
+        /// Strip the resulting executable
         #[arg(short, long)]
-        show_ir: bool,
+        strip: bool,
+
+        /// Prints the LLVM IR when compiling
+        #[arg(short = 'i', long)]
+        print_ir: bool,
+
+        /// Prints the AST when parsing
+        #[arg(short = 't', long)]
+        print_ast: bool,
 
         /// Optional arguments to pass to the program.
         args: Option<Vec<String>>,
@@ -97,17 +115,13 @@ enum Commands {
     },
 }
 
-fn get_current_project() -> Project {
-    match Project::from_path(env::current_dir().unwrap().as_path()) {
-        Some(x) => x,
-        None => {
-            error!("No valid {} found.", "walter.yml".bold());
-        }
-    }
-}
-
 fn main() {
     let args = Args::parse();
+
+    main_r(args).unwrap_or_else(|x| error!("{}", x));
+}
+
+fn main_r(args: Args) -> Result<()> {
     logger::init().unwrap();
 
     match args.command {
@@ -115,28 +129,27 @@ fn main() {
             release,
             assembly,
             no_std,
-            show_ir,
+            print_ir,
+            print_ast,
+            strip,
         } => {
-            let output_file = cook(release, assembly, no_std, show_ir);
+            let output_file = cook(release, assembly, no_std, print_ir, print_ast, strip)?;
             log::info!(
                 "Done! Executable is avalible at {}",
                 output_file.to_str().unwrap().bold()
             );
         }
         Commands::Rise { name } => {
-            let cwd = env::current_dir().unwrap();
-            let path = match name {
-                Some(name) => cwd.join(name),
-                None => cwd,
-            };
+            let cwd = env::current_dir()?;
+            let path = name.map(|name| cwd.join(name)).unwrap_or(cwd);
 
-            fs::create_dir_all(&path).unwrap();
-            let is_empty = fs::read_dir(&path).unwrap().count() == 0;
+            fs::create_dir_all(&path)?;
+            let is_empty = fs::read_dir(&path)?.count() == 0;
 
             let pathstr = path.to_str().unwrap().bold();
 
             if !is_empty {
-                error!("{} exists and is not empty", pathstr);
+                return Err(format!("{} exists and is not empty", pathstr).into());
             }
 
             let name = path.file_name().unwrap().to_str().unwrap().to_string();
@@ -145,7 +158,7 @@ fn main() {
             const TEMPLATE_URL: &str = "https://github.com/elijah629/redditlang";
             const TEMPLATE_REFNAME: &str = "refs/remotes/origin/template";
 
-            generate(TEMPLATE_URL, Some(TEMPLATE_REFNAME), &path).unwrap();
+            generate(TEMPLATE_URL, Some(TEMPLATE_REFNAME), &path)?;
 
             let yaml = serde_yaml::to_string(&ProjectConfiguration {
                 name,
@@ -153,10 +166,10 @@ fn main() {
             })
             .unwrap();
 
-            fs::write(&path.join("walter.yml"), yaml).unwrap();
+            fs::write(&path.join("walter.yml"), yaml)?;
         }
         Commands::Clean => {
-            let project = get_current_project();
+            let project = Project::from_current()?;
             let build_dir = Path::new(&project.path).join("build");
 
             log::info!("Cleaning");
@@ -166,32 +179,43 @@ fn main() {
             release,
             assembly,
             no_std,
-            show_ir,
+            strip,
+            print_ir,
+            print_ast,
             args,
         } => {
-            let output_file = cook(release, assembly, no_std, show_ir);
-            log::info!("Running {}\n", output_file.to_str().unwrap().bold());
+            let output_file = cook(release, assembly, no_std, print_ir, print_ast, strip)?;
+            log::info!("Running {}", output_file.to_str().unwrap().bold());
 
             let mut command = Command::new(output_file);
             if let Some(args) = args {
                 command.args(args);
             }
 
-            command.spawn().unwrap();
+            command.spawn()?;
         }
     }
+    Ok(())
 }
 
-fn parse_file(file: &str) -> Tree {
+fn parse_file(file: &str) -> Result<Tree> {
     match RLParser::parse(Rule::Program, file) {
         Ok(x) => parse(x),
         Err(x) => syntax_error(x),
     }
 }
 
-fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool) -> PathBuf {
-    let project = get_current_project();
-    let std_path = build_libstd().unwrap_or_else(|x| error!("Error building libstd: {:?}", x));
+// should be a config struct
+fn cook(
+    release: bool,
+    assembly: bool,
+    no_std: bool,
+    print_ir: bool,
+    print_ast: bool,
+    strip: bool,
+) -> Result<PathBuf> {
+    let project = Project::from_current()?;
+    let std_path = build_libstd()?;
 
     let project_dir = Path::new(&project.path);
     let build_dir = project_dir
@@ -199,66 +223,158 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool) -> PathBuf {
         .join(if release { "release" } else { "debug" });
     let src_dir = project_dir.join("src");
     let main_file = src_dir.join("main.rl");
-    let main_file = fs::read_to_string(&main_file).unwrap();
+    let main_file = fs::read_to_string(&main_file)?;
 
-    fs::create_dir_all(&build_dir).unwrap();
+    fs::create_dir_all(&build_dir)?;
 
     log::info!("Lexing/Parsing");
 
-    let tree = parse_file(&main_file);
+    let tree = parse_file(&main_file)?;
 
-    log::info!("Compiling");
-
-    let context = Context::create();
-    let module = context.create_module("main");
-    let builder = context.create_builder();
-
-    let compiler = Compiler {
-        context: &context,
-        module,
-        builder,
-    };
-
-    define_libstd(&compiler);
-
-    let entry_basic_block = {
-        let compiler = &compiler;
-        let main_type = compiler.context.i32_type().fn_type(&[], false);
-        let main_fn = compiler.module.add_function("main", main_type, None);
-
-        let entry_basic_block = compiler.context.append_basic_block(main_fn, "");
-        compiler.builder.position_at_end(entry_basic_block);
-        entry_basic_block
-    };
-    compile(
-        &compiler,
-        &tree,
-        &mut CompileMetadata {
-            basic_block: entry_basic_block,
-            function_scope: Scope {
-                variables: HashMap::new(),
-            },
-        },
-    );
-
-    // Add return
-    compiler
-        .builder
-        .build_return(Some(&compiler.context.i32_type().const_zero()));
-
-    if show_ir {
-        println!("{}", &compiler.module.print_to_string().to_str().unwrap());
+    if print_ast {
+        println!("{:#?}", tree);
     }
 
-    // LLVM errors
-    if let Err(x) = compiler.module.verify() {
-        log::error!("│ {}", "Module verification failed".bold());
-        let lines: Vec<&str> = x.to_str().unwrap().lines().collect();
-        for line in &lines[0..lines.len() - 1] {
-            log::error!("│  {}", line);
+    log::info!("Building module tree");
+
+    /// Collects every created module and canocalizes the path
+    /// parent_module_path is the module path of the modules parent,
+    /// ex if the full module file path is a.b.c, this should be a.b
+    /// base_path is the FS path where main.rl is located
+    fn get_all_modules<P: AsRef<Path>>(
+        tree: &Tree,
+        src_dir: P,
+    ) -> Result<HashMap<PathBuf, Tree>> {
+        fn recursive(
+            tree: &Tree,
+            parent_module_path: &Path,
+            base_path: &Path,
+            imports: &mut HashMap<PathBuf, Tree>,
+        ) -> Result<()> {
+            for node in tree {
+                match node {
+                    parser::Node::Import(import) => {
+                        // base_path + parent_module_path + import.0 + ".rl" = path to file
+                        let module_path = parent_module_path.join(&import.0);
+                        let file_path = base_path
+                            .clone()
+                            .to_path_buf()
+                            .join(module_path.with_extension("rl"));
+
+                        let file_contents = fs::read_to_string(&file_path)?;
+
+                        if !imports.contains_key(&module_path) {
+                            let tree = parse_file(&file_contents)?;
+
+                            imports.insert(module_path, tree.clone());
+                            recursive(&tree, parent_module_path, base_path, imports)?;
+                        }
+                    }
+                    _ => (),
+                }
+            }
+
+            Ok(())
         }
-        error!("└─ {}\n", lines.last().unwrap());
-    };
+        let mut imports = HashMap::new();
+        recursive(&tree, "".as_ref(), &src_dir.as_ref(), &mut imports)?;
+        Ok(imports)
+    }
+
+    // 1. recursively navigate tree, following all imports.
+    // 2. compile each tree
+    // 3. link all modules together
+
+    let mut trees = get_all_modules(&tree, &src_dir)?;
+    trees.insert(PathBuf::from("main"), tree);
+
+    log::info!(
+        "Compiling {} {}",
+        trees.len().to_string().bold(),
+        if trees.len() == 1 { "tree" } else { "trees" }
+    );
+
+    let context = Context::create();
+    let builder = context.create_builder();
+
+    let combined_module = trees
+        .into_iter()
+        .map(|(name, tree)| {
+            let name = name
+                .components()
+                .map(|x| x.as_os_str().to_str().unwrap())
+                .collect::<Vec<_>>()
+                .join(".");
+
+            let module = context.create_module(&name);
+            let compiler = Compiler {
+                context: &context,
+                module,
+                builder: &builder,
+            };
+
+            define_libstd(&compiler);
+
+            let compiler = &compiler;
+            let main_type = compiler.context.i32_type().fn_type(&[], false);
+            let main_fn = compiler.module.add_function(
+                if name == "main" {
+                    "main".to_string()
+                } else {
+                    format!("{}.main", &name)
+                }
+                .as_str(),
+                main_type,
+                None,
+            );
+
+            let entry_basic_block = compiler.context.append_basic_block(main_fn, "");
+            compiler.builder.position_at_end(entry_basic_block);
+
+            compile(
+                &compiler,
+                &tree,
+                &mut CompileMetadata {
+                    r#loop: None,
+                    fn_value: main_fn,
+                    function_scope: Scope {
+                        variables: HashMap::new(),
+                    },
+                },
+            )?;
+
+            // Add return
+            compiler
+                .builder
+                .build_return(Some(&compiler.context.i32_type().const_zero()));
+
+            let module_name = &compiler.module.get_name().to_str()?;
+            if print_ir {
+                println!("Module: {}", module_name.bold());
+                println!("{}", &compiler.module.print_to_string().to_str().unwrap());
+            }
+
+            // LLVM errors
+            if let Err(x) = compiler.module.verify() {
+                log::error!("│ Module verification for {} failed", module_name.bold());
+                let lines: Vec<&str> = x.to_str().unwrap().lines().collect();
+                for line in &lines[0..lines.len() - 1] {
+                    log::error!("│  {}", line);
+                }
+                error!("└─ {}\n", lines.last().unwrap());
+            };
+
+            Ok(compiler.module.clone())
+        })
+        .reduce(|a: Result<Module<'_>>, c| {
+            let a = a?;
+            let c = c?;
+
+            c.link_in_module(a)?;
+
+            Ok(c)
+        })
+        .unwrap()?;
 
     // TODO: allow user chosen targets
     Target::initialize_x86(&InitializationConfig::default());
@@ -275,7 +391,7 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool) -> PathBuf {
     let object_path = &build_dir.join(format!(
         "{}.reddit.{}",
         project.config.name,
-        if assembly { "s" } else { "o" }
+        if assembly { "s" } else { "o" } // "s" being asm, could do .asm but whatever
     ));
 
     let target = Target::from_name("x86-64").unwrap();
@@ -284,17 +400,15 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool) -> PathBuf {
         .create_target_machine(target_triple, "x86-64", "+avx2", opt, reloc, model)
         .unwrap();
 
-    target_machine
-        .write_to_file(
-            &compiler.module,
-            if assembly {
-                FileType::Assembly
-            } else {
-                FileType::Object
-            },
-            &object_path,
-        )
-        .unwrap();
+    target_machine.write_to_file(
+        &combined_module,
+        if assembly {
+            FileType::Assembly
+        } else {
+            FileType::Object
+        },
+        &object_path,
+    )?;
 
     log::info!("Linking");
 
@@ -306,5 +420,6 @@ fn cook(release: bool, assembly: bool, no_std: bool, show_ir: bool) -> PathBuf {
         &std_path,
         release,
         no_std,
+        strip,
     )
 }

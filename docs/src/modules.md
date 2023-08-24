@@ -2,28 +2,30 @@
 
 Importing modules
 
-- The import keyword is `weneed`, or `bringme`.
-- `weneed` and `bringme` are functionally equivalent.
-- A module name must be specified after the keyword in quotes.
+- The import directive is `weneed`, or `bringme`.
+- `weneed` and `bringme` are equivalent.
+- The module path is a dot seperated list of `<IDENT>`.
 - Standard form:
 
   ```redditlang
-  weneed "<MODULE_NAME>"
+  weneed "<MODULE_PATH>"
   ```
 
   or,
 
   ```redditlang
-  bringme "<MODULE_NAME>"
+  bringme "<MODULE_PATH>"
   ```
 
 Creating modules
 
-- The module definition keyword is `subreddit`.
-- An `r/` must exist in front of the module name. It must not appear within the module name.
-- The `subreddit` keyword can only appear once, at the top of each file.
-- Standard form:
-
-  ```redditlang
-  subreddit r/<MODULE_NAME>
-  ```
+- Modules are created from the filesystem
+- For example
+```
+main.rl
+a.rl
+b/
+  b.rl
+  c.rl
+```
+- The module paths for this are `r/main r/a r/b.b r/b.c`

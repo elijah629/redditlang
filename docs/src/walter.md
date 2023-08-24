@@ -24,35 +24,6 @@ version: <SEMVER_VERSION_NUMBER>
 
 ## CLI Documentation
 
-You can also run `walter help <COMMAND>` to see info about a specific command, or to see info about the entire program. You can add `--help` or `-h` to get help aswell.
-To print the version run `walter -V` or `walter --version`
+Run `walter help <COMMAND?>` to see info about a specific command, or to see info about the entire program. You can add `--help` or `-h` to get help aswell.
 
-walter `<COMMAND>`
-
-- `cook [OPTIONS]` **Builds a program**
-
-  **Options**
-
-  - `-r`, `--release` Enables release mode, longer build but more optimizations
-  - `-a`, `--assembly` Compiles LLVM to an assembly file instead of an object file before linking
-  - `-n`, `--no-std` Does not link the standard library
-
-- `serve [OPTIONS] [ARGS]...` **Builds and runs a program**
-
-  **Arguments**
-
-  - `[ARGS]...` Optional arguments to pass to the program
-
-  **Options**
-
-  - `-r`, `--release` Enables release mode, longer build but more optimizations
-  - `-a`, `--assembly` Compiles LLVM to an assembly file instead of an object file before linking
-  - `-n`, `--no-std` Does not link the standard library
-  - `-s`, `--show-ir` Shows the LLVM IR when compiling
-
-- `clean` **Removes build dir**
-- `rise [NAME]` **Creates a new walter project**
-
-  **Arguments**
-
-  1. `[NAME]` If you don't specify a name it is created in the current directory with the current directories name if it is empty
+> There used to be a documentation here, but it was not up to date and became a hassle to update. Please refer to the cli instead.

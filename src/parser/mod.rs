@@ -1,40 +1,45 @@
-use crate::Rule;
+use std::path::PathBuf;
+
+use crate::{utils::Result, Rule};
 
 use self::from_pair::Parse;
 
 pub mod from_pair;
 pub type Number = f64; // Number type
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Term {
     Number(Number),
     String(String),
+    Boolean(bool),
+    // Foolean(Foolean),
+    Array(Vec<Expr>),
+    Null,
+
     Ident(Ident),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Type {
-    pub ident: Ident,
-    pub is_array: bool,
+    pub generics: Vec<Type>,
+    pub root_type: Ident,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Declaration {
     pub ident: Ident,
-    pub r#type: Option<Type>,
+    pub r#type: Type,
 }
 
 // Statements
 
-#[derive(Debug)]
-pub struct Loop {
-    pub body: Tree,
-}
+#[derive(Debug, Clone)]
+pub struct Loop(pub Tree);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Break;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Function {
     pub modifiers: Vec<FunctionMod>,
     pub declaration: Declaration,
@@ -42,106 +47,96 @@ pub struct Function {
     pub body: Tree,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum FunctionMod {
     Debug,
     Public,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Call {
     pub ident: Ident,
-    pub args: Vec<Term>,
+    pub args: Vec<Expr>,
 }
 
-#[derive(Debug)]
-pub struct Throw {
-    pub value: Expr,
-}
+#[derive(Debug, Clone)]
+pub struct Throw(pub Expr);
 
-#[derive(Debug)]
-pub struct Import {
-    pub path: Term,
-}
+#[derive(Debug, Clone)]
+pub struct Import(pub PathBuf); // using pathbuf for joining and canocalizations
 
-#[derive(Debug)]
-pub struct Module {
-    pub ident: Ident,
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TryCatch {
     pub r#try: Try,
     pub catch: Catch,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Try(pub Tree);
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Catch(pub Option<Ident>, pub Tree);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Variable {
     pub modifiers: Vec<VariableMod>,
     pub declaration: Declaration,
     pub value: Expr,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum VariableMod {
     Public,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Assignment {
     pub ident: Ident,
     pub value: Expr,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IfBlock {
     pub if_nodes: Vec<IfNode>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum IfNode {
     Case(IfCase),
     Else(Else),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IfCase {
     pub body: Tree,
     pub expr: Expr,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Else {
     pub body: Tree,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Class {
     pub ident: Ident,
     pub body: Tree,
 }
 
-#[derive(Debug)]
-pub struct Return {
-    pub value: Expr,
-}
+#[derive(Debug, Clone)]
+pub struct Return(pub Expr);
 
 // Operators
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum MathOperator {
     Add,
     Subtract,
     Multiply,
     Divide,
     XOR,
+    Modulus,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ConditionalOperator {
     Equality,
     AntiEquality,
@@ -155,24 +150,24 @@ pub type ConditionExprTerm = ChainedExprTerm<ConditionalOperator>;
 pub type BinaryExpr = ChainedExpr<MathOperator>;
 pub type BinaryExprTerm = ChainedExprTerm<MathOperator>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IndexExpr {
     pub term: Term,
     pub index: Index,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Index {
     Number(Number),
     String(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ChainedExpr<T> {
     pub terms: Vec<ChainedExprTerm<T>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ChainedExprTerm<T> {
     pub operand: Term,
 
@@ -180,20 +175,20 @@ pub struct ChainedExprTerm<T> {
     pub operator: Option<T>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Ident(pub String);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     BinaryExpr(BinaryExpr),
     ConditionalExpr(ConditionalExpr),
     IndexExpr(IndexExpr),
     Term(Term),
-    Null,
+    CallExpr(Call),
 }
 
 // AST
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Node {
     Loop(Loop),
     Break(Break),
@@ -201,7 +196,6 @@ pub enum Node {
     Call(Call),
     Throw(Throw),
     Import(Import),
-    Module(Module),
     TryCatch(TryCatch),
     Variable(Variable),
     Assignment(Assignment),
@@ -209,61 +203,66 @@ pub enum Node {
     Class(Class),
     Return(Return),
     Expr(Expr),
+    EOI,
 }
 
 pub type Tree = Vec<Node>;
 
-pub fn parse_one(pair: pest::iterators::Pair<'_, Rule>) -> Option<Node> {
+pub fn parse_one(pair: pest::iterators::Pair<'_, Rule>) -> Result<Node> {
     match pair.as_rule() {
         Rule::Statement => {
             let statement = pair.into_inner().next().unwrap();
             match statement.as_rule() {
-                Rule::Loop => Some(Node::Loop(Loop::parse_from(statement).unwrap())),
-                Rule::Function => Some(Node::Function(Function::parse_from(statement).unwrap())),
-                Rule::Call => Some(Node::Call(Call::parse_from(statement).unwrap())),
-                Rule::Break => Some(Node::Break(Break::parse_from(statement).unwrap())),
-                Rule::Throw => Some(Node::Throw(Throw::parse_from(statement).unwrap())),
-                Rule::Import => Some(Node::Import(Import::parse_from(statement).unwrap())),
-                Rule::Module => Some(Node::Module(Module::parse_from(statement).unwrap())),
-                Rule::TryCatch => Some(Node::TryCatch(TryCatch::parse_from(statement).unwrap())),
-                Rule::Variable => Some(Node::Variable(Variable::parse_from(statement).unwrap())),
+                Rule::Loop => Ok(Node::Loop(Loop::parse_from(statement).unwrap())),
+                Rule::Function => Ok(Node::Function(Function::parse_from(statement).unwrap())),
+                Rule::Call => Ok(Node::Call(Call::parse_from(statement).unwrap())),
+                Rule::Break => Ok(Node::Break(Break::parse_from(statement).unwrap())),
+                Rule::Throw => Ok(Node::Throw(Throw::parse_from(statement).unwrap())),
+                Rule::Import => Ok(Node::Import(Import::parse_from(statement).unwrap())),
+                Rule::TryCatch => Ok(Node::TryCatch(TryCatch::parse_from(statement).unwrap())),
+                Rule::Variable => Ok(Node::Variable(Variable::parse_from(statement).unwrap())),
                 Rule::AssignmentStatement => {
-                    Some(Node::Assignment(Assignment::parse_from(statement).unwrap()))
+                    Ok(Node::Assignment(Assignment::parse_from(statement)?))
                 }
-                Rule::IfBlock => Some(Node::If(IfBlock::parse_from(statement).unwrap())),
-                Rule::Class => Some(Node::Class(Class::parse_from(statement).unwrap())),
-                Rule::Return => Some(Node::Return(Return::parse_from(statement).unwrap())),
-                _ => None,
+                Rule::IfBlock => Ok(Node::If(IfBlock::parse_from(statement)?)),
+                Rule::Class => Ok(Node::Class(Class::parse_from(statement)?)),
+                Rule::Return => Ok(Node::Return(Return::parse_from(statement)?)),
+                _ => Err("UNEXPECTED_STATEMENT".into()),
             }
         }
         Rule::Expr => {
             let expression = pair.into_inner().next().unwrap();
             match expression.as_rule() {
-                Rule::BinaryExpr => Some(Node::Expr(Expr::BinaryExpr(
-                    BinaryExpr::parse_from(expression).unwrap(),
+                Rule::BinaryExpr => Ok(Node::Expr(Expr::BinaryExpr(BinaryExpr::parse_from(
+                    expression,
+                )?))),
+                Rule::ConditionalExpr => Ok(Node::Expr(Expr::ConditionalExpr(
+                    ConditionalExpr::parse_from(expression)?,
                 ))),
-                Rule::ConditionalExpr => Some(Node::Expr(Expr::ConditionalExpr(
-                    ConditionalExpr::parse_from(expression).unwrap(),
-                ))),
-                Rule::IndexExpr => Some(Node::Expr(Expr::IndexExpr(
-                    IndexExpr::parse_from(expression).unwrap(),
-                ))),
-                Rule::Null => Some(Node::Expr(Expr::Null)),
+                Rule::IndexExpr => Ok(Node::Expr(Expr::IndexExpr(IndexExpr::parse_from(
+                    expression,
+                )?))),
+                Rule::Call => Ok(Node::Expr(Expr::CallExpr(Call::parse_from(expression)?))),
                 _ => Term::parse_from(expression).map(|x| Node::Expr(Expr::Term(x))),
             }
         }
-        _ => None,
+        Rule::EOI => Ok(Node::EOI),
+        _ => Err(format!(
+            "Expected either Statement or Expr, but got {:?}",
+            pair.as_rule()
+        )
+        .into()),
     }
 }
 
-pub fn parse(pairs: pest::iterators::Pairs<'_, Rule>) -> Tree {
+pub fn parse(pairs: pest::iterators::Pairs<'_, Rule>) -> Result<Tree> {
     let mut tree: Tree = vec![];
 
     for pair in pairs {
-        let node = parse_one(pair);
-        if node.is_some() {
-            tree.push(node.unwrap());
+        let node = parse_one(pair)?;
+        if !matches!(node, Node::EOI) {
+            tree.push(node);
         }
     }
-    tree
+    Ok(tree)
 }

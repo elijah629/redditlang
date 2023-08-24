@@ -16,7 +16,6 @@ Statement  =  {
   | TryCatch
   | Throw
   | Import
-  | Module
   | Variable
   | AssignmentStatement
   | IfBlock
@@ -39,7 +38,7 @@ FunctionArgs =  { "(" ~ FunctionArg* ~ ")" }
 Return       =  { "spez " ~ Expr }
 
 // Identifiers and Declarations
-Declaration =  { TypedIdent | Ident }
+Declaration =  { Ident ~ "damn " ~ Type }
 Ident       = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 
 // If, Else If, Else
@@ -65,16 +64,24 @@ Expr            =  {
     ConditionalExpr
   | BinaryExpr
   | IndexExpr
+  | Call
   | Term
 }
-Literal         = _{ Number | String | Foolean | Boolean | Null }
-Term            = _{ Literal | Call | Ident | "(" ~ Expr ~ ")" }
+Literal         = _{ Array | Number | String | Boolean | Null }
+Term            = _{ Literal | Ident | "(" ~ Expr ~ ")" }
 
-// Types
-TypedIdentKwd = _{ "damn " }
-TypedIdent    = _{ Ident ~ TypedIdentKwd ~ Type }
-TypeArray     =  { "[]" }
-Type          =  { Ident ~ TypeArray? }
+// Possible values, in order of matching complexity:
+// (Type...,) >> Ident
+// Ident >> Ident
+// Ident
+
+// Example:
+// (Number >> Array,) >> Array
+// (String, Number,) >> Dictionary
+// Number
+
+TGeneric = _{ (Type ~ ",")+ }
+Type     =  { ("(" ~ TGeneric ~ ")" | Ident) ~ ">>" ~ Ident | Ident }
 
 // Throw, Try, Catch
 Throw    = { "shoot " ~ Expr }
@@ -84,16 +91,15 @@ TryCatch = { Try ~ Catch }
 
 // Modules
 ImportKwd = _{ "weneed" | "bringme" }
-ModuleKwd = _{ "subreddit" }
-Module    =  { ModuleKwd ~ "r/" ~ Ident }
-Import    =  { ImportKwd ~ String }
+ImportPath = _{ Ident ~ ("." ~ Ident)* }
+Import    =  { ImportKwd ~ "r/" ~ ImportPath }
 
 // Modifiers
 AccessibilityModifier = { "bar " }
 
 // Variables
-VariableKwd         = _{ "meth" }
 VariableMods        =  { AccessibilityModifier* }
+VariableKwd         = _{ "meth" }
 Variable            =  { VariableMods ~ VariableKwd ~ Declaration ~ Assignment ~ Expr }
 AssignmentStatement =  {
     Ident ~ Assignment ~ Expr
@@ -109,12 +115,14 @@ LessThan           = { "<" }
 LessThanOrEqual    = { "⋜" }
 
 // Math
-Add      = { "⨋" }
+Add = { "⨋" }
+
 /// Not U+2012 (figure dash) but U+2013 (en dash)
 Subtract = { "–" }
 Multiply = { "⋇" }
 Divide   = { "⎲" }
 XOR      = { "⊕" }
+Modulus  = { "⨊" }
 
 // Other
 Assignment = _{ "∑" }
@@ -122,15 +130,17 @@ Negation   =  { "¡" }
 
 UnaryOperator       = { Add | Subtract | Negation }
 ConditionalOperator = { Equality | Inequality | GreaterThan | GreaterThanOrEqual | LessThan | LessThanOrEqual }
-MathOperator        = { Add | Subtract | Multiply | Divide | XOR }
+MathOperator        = { Add | Subtract | Multiply | Divide | XOR | Modulus }
 
 // Class
 ClassKwd = _{ "school " }
 Class    =  { ClassKwd ~ Ident ~ Block }
 
-// Primitives
-String        = ${ Quote ~ StringContent ~ Quote }
-StringContent = _{ Char* }
+// Types
+//                    haha char*
+String        = ${ Quote ~ Char* ~ Quote }
+
+// not type
 Char          = _{
     !("\"" | "\\") ~ ANY
   | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
@@ -138,11 +148,14 @@ Char          = _{
   | "\\" ~ ("x" ~ ASCII_HEX_DIGIT{2})
 }
 
-Sign = _{ Add | Subtract }
+Sign      = _{ Add | Subtract }
 Magnitude =  { (ASCII_DIGIT+ ~ ".")? ~ ASCII_DIGIT+ }
 Number    = ${ Sign? ~ Magnitude }
-/// Only for syntax errors ( constant indexes ), must convert to the "Number" type of the AST
-UNumber   = ${ Add? ~ Magnitude }
+
+Array = { "[" ~ (Expr ~ ",")* ~ "]" }
+
+/// Only for syntax errors in array accesses. not an actual type
+UNumber = ${ Add? ~ Magnitude }
 
 Null = { "wat" }
 
@@ -157,3 +170,4 @@ Foolean         = { True | False | FooleanNull | FooleanIOFalure | FooleanRandom
 // Misc
 Block =  { "{" ~ Statements? ~ "}" }
 Quote = _{ "\"" | "\'" }
+

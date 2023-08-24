@@ -16,7 +16,7 @@
 - [Functions](./functions.md)
 - [Errors](./errors.md)
 - [Comments](./comments.md)
-- [Primitive types](./primitive-types.md)
+- [Types](./types.md)
 - [Operators](./operators.md)
 - [Classes](./classes.md)
 - [Modules](./modules.md)

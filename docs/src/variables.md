@@ -9,7 +9,7 @@ An initializer is required.
 Standard form:
 
 ```redditlang
-meth <IDENT> ∑ <EXPR>
+meth <DECLERATION> ∑ <EXPR>
 ```
 
 Variables are scope-local and shadow previous variables with the same name.
