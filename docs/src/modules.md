@@ -21,7 +21,7 @@ Creating modules
 
 - Modules are created from the filesystem
 - For example
-```
+```txt
 main.rl
 a.rl
 b/
