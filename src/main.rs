@@ -20,13 +20,13 @@ use parser::{parse, Tree};
 use pest::Parser as PestParser;
 use pest_derive::Parser as PestParser;
 use project::Project;
-use semver::Version;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     env, fs,
     hash::Hash,
     path::{Path, PathBuf},
     process::Command,
+    rc::Rc,
 };
 use utils::Result;
 
@@ -118,10 +118,10 @@ enum Commands {
 fn main() {
     let args = Args::parse();
 
-    main_r(args).unwrap_or_else(|x| error!("{}", x));
+    main_err(args).unwrap_or_else(|x| error!("{}", x));
 }
 
-fn main_r(args: Args) -> Result<()> {
+fn main_err(args: Args) -> Result<()> {
     logger::init().unwrap();
 
     match args.command {
@@ -162,7 +162,7 @@ fn main_r(args: Args) -> Result<()> {
 
             let yaml = serde_yaml::to_string(&ProjectConfiguration {
                 name,
-                version: Version::new(0, 0, 1),
+                version: "0.0.1".to_string(),
             })
             .unwrap();
 
@@ -198,10 +198,10 @@ fn main_r(args: Args) -> Result<()> {
     Ok(())
 }
 
-fn parse_file(file: &str) -> Result<Tree> {
+fn parse_file<P: AsRef<Path>>(file_path: P, file: &str) -> Result<Tree> {
     match RLParser::parse(Rule::Program, file) {
         Ok(x) => parse(x),
-        Err(x) => syntax_error(x),
+        Err(x) => syntax_error(x.with_path(file_path.as_ref().to_str().unwrap())),
     }
 }
 
@@ -217,19 +217,20 @@ fn cook(
     let project = Project::from_current()?;
     let std_path = build_libstd()?;
 
-    let project_dir = Path::new(&project.path);
-    let build_dir = project_dir
+    let build_dir = project
+        .path
         .join("build")
         .join(if release { "release" } else { "debug" });
-    let src_dir = project_dir.join("src");
-    let main_file = src_dir.join("main.rl");
-    let main_file = fs::read_to_string(&main_file)?;
+    let src_dir = project.path.join("src");
+    let main_file_path = src_dir.join("main.rl");
+    let main_file = fs::read_to_string(&main_file_path)
+        .map_err(|_| format!("No {} found in src, try creating one.", "main.rl".bold()))?;
 
     fs::create_dir_all(&build_dir)?;
 
     log::info!("Lexing/Parsing");
 
-    let tree = parse_file(&main_file)?;
+    let tree = parse_file(&main_file_path.strip_prefix(&project.path)?, &main_file)?;
 
     if print_ast {
         println!("{:#?}", tree);
@@ -242,32 +243,46 @@ fn cook(
     /// ex if the full module file path is a.b.c, this should be a.b
     /// base_path is the FS path where main.rl is located
     fn get_all_modules<P: AsRef<Path>>(
-        tree: &Tree,
+        tree: Tree,
+        project_path: P,
         src_dir: P,
     ) -> Result<HashMap<PathBuf, Tree>> {
         fn recursive(
-            tree: &Tree,
+            tree: Tree,
             parent_module_path: &Path,
-            base_path: &Path,
+            project_path: &Path,
+            src_path: &Path,
             imports: &mut HashMap<PathBuf, Tree>,
         ) -> Result<()> {
-            for node in tree {
+            for node in tree.into_iter() {
                 match node {
                     parser::Node::Import(import) => {
                         // base_path + parent_module_path + import.0 + ".rl" = path to file
                         let module_path = parent_module_path.join(&import.0);
-                        let file_path = base_path
+                        let file_path = src_path
                             .clone()
                             .to_path_buf()
                             .join(module_path.with_extension("rl"));
-
-                        let file_contents = fs::read_to_string(&file_path)?;
+                        let file_contents = fs::read_to_string(&file_path).map_err(|_| {
+                            format!(
+                                "Cannot find module {}",
+                                module_path
+                                    .components()
+                                    .map(|x| x.as_os_str().to_str().unwrap())
+                                    .collect::<Vec<_>>()
+                                    .join(".")
+                                    .bold()
+                            )
+                        })?;
 
                         if !imports.contains_key(&module_path) {
-                            let tree = parse_file(&file_contents)?;
+                            let tree = parse_file(
+                                &file_path.strip_prefix(&project_path)?,
+                                &file_contents,
+                            )?;
 
-                            imports.insert(module_path, tree.clone());
-                            recursive(&tree, parent_module_path, base_path, imports)?;
+                            imports.insert(module_path, Rc::clone(&tree));
+                            recursive(tree, parent_module_path, project_path, src_path, imports)?;
                         }
                     }
                     _ => (),
@@ -277,7 +292,14 @@ fn cook(
             Ok(())
         }
         let mut imports = HashMap::new();
-        recursive(&tree, "".as_ref(), &src_dir.as_ref(), &mut imports)?;
+        imports.insert(PathBuf::from("main"), Rc::clone(&tree));
+        recursive(
+            tree,
+            "".as_ref(),
+            &project_path.as_ref(),
+            &src_dir.as_ref(),
+            &mut imports,
+        )?;
         Ok(imports)
     }
 
@@ -285,8 +307,7 @@ fn cook(
     // 2. compile each tree
     // 3. link all modules together
 
-    let mut trees = get_all_modules(&tree, &src_dir)?;
-    trees.insert(PathBuf::from("main"), tree);
+    let trees = get_all_modules(tree, &project.path, &src_dir)?;
 
     log::info!(
         "Compiling {} {}",
@@ -321,7 +342,10 @@ fn cook(
                 if name == "main" {
                     "main".to_string()
                 } else {
-                    format!("{}.main", &name)
+                    format!("{}.main", &name) // redditlang doesn't support dot notation, but this
+                                              // is an llvm trick, it allows .'s in function names.
+                                              // To call this you could do `call module.main()` and
+                                              // it looks like module is a class/object
                 }
                 .as_str(),
                 main_type,
@@ -356,17 +380,12 @@ fn cook(
 
             // LLVM errors
             if let Err(x) = compiler.module.verify() {
-                log::error!("│ Module verification for {} failed", module_name.bold());
-                let lines: Vec<&str> = x.to_str().unwrap().lines().collect();
-                for line in &lines[0..lines.len() - 1] {
-                    log::error!("│  {}", line);
-                }
-                error!("└─ {}\n", lines.last().unwrap());
+                log::error!("Module verification for {} failed\n{x}", module_name.bold());
             };
 
             Ok(compiler.module.clone())
         })
-        .reduce(|a: Result<Module<'_>>, c| {
+        .reduce(|a: Result<Module>, c| {
             let a = a?;
             let c = c?;
 

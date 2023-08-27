@@ -4,17 +4,18 @@ Importing modules
 
 - The import directive is `weneed`, or `bringme`.
 - `weneed` and `bringme` are equivalent.
+- They are followed by `r/` then the module path
 - The module path is a dot seperated list of `<IDENT>`.
 - Standard form:
 
   ```redditlang
-  weneed "<MODULE_PATH>"
+  weneed r/<MODULE_PATH>
   ```
 
   or,
 
   ```redditlang
-  bringme "<MODULE_PATH>"
+  bringme r/<MODULE_PATH>
   ```
 
 Creating modules

@@ -1,8 +1,4 @@
-use inkwell::{
-    types::BasicTypeEnum,
-    values::BasicValueEnum,
-    AddressSpace,
-};
+use inkwell::{types::BasicTypeEnum, values::BasicValueEnum, AddressSpace};
 
 use crate::{
     compiler::ScopeVariable,
@@ -61,7 +57,7 @@ impl<'a> Compile<'a> for Variable {
                 if !matches!(term, Term::Null | Term::Ident(..)) {
                     if !r#type.same_as_term(term)? {
                         return Err(
-                            format!("Invalid type, got {:?}, expected {:?}", term, r#type).into(),
+                            format!("Invalid type, got {term:?}, expected {:?}", r#type).into()
                         );
                     }
                 }
@@ -168,8 +164,8 @@ impl<'a> Compile<'a> for Assignment {
                 if !matches!(term, Term::Null | Term::Ident(..)) {
                     if !var.r#type.same_as_term(&term)? {
                         return Err(format!(
-                            "Invalid type, got {:?}, expected {:?}",
-                            term, var.r#type
+                            "Invalid type, got {term:?}, expected {:?}",
+                            var.r#type
                         )
                         .into());
                     }
@@ -290,6 +286,49 @@ impl<'a> Compile<'a> for Break {
     }
 }
 
+/*
+impl<'a> Compile<'a> for Return {
+    fn compile(
+        &self,
+        compiler: &Compiler<'a>,
+        compile_meta: &mut CompileMetadata<'a>,
+    ) -> ResultE<()> {
+        let value = match &self.0 {
+            Expr::BinaryExpr(_) => todo!(),
+            Expr::ConditionalExpr(_) => todo!(),
+            Expr::IndexExpr(_) => todo!(),
+            Expr::Term(term) => match term {
+                Term::Number(_) => todo!(),
+                Term::String(_) => todo!(),
+                Term::Boolean(_) => todo!(),
+                Term::Array(_) => todo!(),
+                Term::Null => todo!(),
+                Term::Ident(_) => todo!(),
+            },
+            Expr::CallExpr(_) => todo!(),
+        };
+        compiler.builder.build_return(Some(value));
+    }
+}
+
+impl<'a> Compute<'a, BasicValueEnum<'a>> for Expr {
+    fn compute(
+        &self,
+        compiler: &Compiler<'a>,
+        compile_meta: &CompileMetadata<'a>,
+    ) -> ResultE<BasicValueEnum<'a>> {
+        match &self {
+            Expr::BinaryExpr(_) => todo!(),
+            Expr::ConditionalExpr(_) => todo!(),
+            Expr::IndexExpr(_) => todo!(),
+            Expr::Term(term) => {
+
+            },
+            Expr::CallExpr(_) => todo!(),
+        }
+    }
+}
+*/
 /*
 impl<'a> Compile<'a> for Call {
     fn compile(&self, compiler: &Compiler<'a>, compile_meta: &mut CompileMetadata<'a>) {
@@ -497,10 +536,10 @@ impl ValidType {
                 Ok(matches!(self, ValidType::Boolean))
             },
             Term::Array(_) => {
-                Ok(matches!(self, ValidType::Array(..))) // TODO: check array type
+                Ok(matches!(self, ValidType::Array(..))) // TODO: check generic types
             },
             Term::Ident(_) => {
-                Err("term is an Ident, we do not know the type of an arbitrary identifier at compile time.".to_string())
+                Err("term is an Ident. It impossible to know thetype of an arbitrary identifier at compile time.".to_string())
             },
             Term::Null => {
                 Err("Null is not a valid type.".to_string())

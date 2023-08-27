@@ -28,7 +28,8 @@ impl log::Log for ColoredLogger {
                     .to_lowercase()
                     .color(level_to_color(record.level()))
                     .bold(),
-                ":".color(level_to_color(record.level())).bold(),
+                ":".bold(),
+                //":".color(level_to_color(record.level())).bold(),
                 record.args()
             );
         }

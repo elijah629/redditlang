@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, rc::Rc};
 
 use crate::{utils::Result, Rule};
 
@@ -7,7 +7,7 @@ use self::from_pair::Parse;
 pub mod from_pair;
 pub type Number = f64; // Number type
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Term {
     Number(Number),
     String(String),
@@ -19,13 +19,13 @@ pub enum Term {
     Ident(Ident),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Type {
     pub generics: Vec<Type>,
     pub root_type: Ident,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Declaration {
     pub ident: Ident,
     pub r#type: Type,
@@ -33,13 +33,13 @@ pub struct Declaration {
 
 // Statements
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Loop(pub Tree);
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Break;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Function {
     pub modifiers: Vec<FunctionMod>,
     pub declaration: Declaration,
@@ -47,86 +47,87 @@ pub struct Function {
     pub body: Tree,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum FunctionMod {
     Debug,
     Public,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Call {
     pub ident: Ident,
     pub args: Vec<Expr>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Throw(pub Expr);
 
-#[derive(Debug, Clone)]
-pub struct Import(pub PathBuf); // using pathbuf for joining and canocalizations
+#[derive(Debug)]
+pub struct Import(pub PathBuf); // using pathbuf for joining, only downside is that to_string uses
+                                // "/" and not "."
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct TryCatch {
     pub r#try: Try,
     pub catch: Catch,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Try(pub Tree);
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Catch(pub Option<Ident>, pub Tree);
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Variable {
     pub modifiers: Vec<VariableMod>,
     pub declaration: Declaration,
     pub value: Expr,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum VariableMod {
     Public,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Assignment {
     pub ident: Ident,
     pub value: Expr,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct IfBlock {
     pub if_nodes: Vec<IfNode>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum IfNode {
     Case(IfCase),
     Else(Else),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct IfCase {
     pub body: Tree,
     pub expr: Expr,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Else {
     pub body: Tree,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Class {
     pub ident: Ident,
     pub body: Tree,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Return(pub Expr);
 
 // Operators
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum MathOperator {
     Add,
     Subtract,
@@ -136,7 +137,7 @@ pub enum MathOperator {
     Modulus,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum ConditionalOperator {
     Equality,
     AntiEquality,
@@ -150,24 +151,24 @@ pub type ConditionExprTerm = ChainedExprTerm<ConditionalOperator>;
 pub type BinaryExpr = ChainedExpr<MathOperator>;
 pub type BinaryExprTerm = ChainedExprTerm<MathOperator>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct IndexExpr {
     pub term: Term,
     pub index: Index,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Index {
     Number(Number),
     String(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ChainedExpr<T> {
     pub terms: Vec<ChainedExprTerm<T>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ChainedExprTerm<T> {
     pub operand: Term,
 
@@ -175,10 +176,10 @@ pub struct ChainedExprTerm<T> {
     pub operator: Option<T>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Ident(pub String);
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Expr {
     BinaryExpr(BinaryExpr),
     ConditionalExpr(ConditionalExpr),
@@ -188,7 +189,7 @@ pub enum Expr {
 }
 
 // AST
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Node {
     Loop(Loop),
     Break(Break),
@@ -203,31 +204,32 @@ pub enum Node {
     Class(Class),
     Return(Return),
     Expr(Expr),
-    EOI,
 }
 
-pub type Tree = Vec<Node>;
+// Rc<[T]> is way faster than Vec<T> for non-mutable potentially large data that needs to be cloned
+pub type Tree = Rc<[Node]>;
 
 pub fn parse_one(pair: pest::iterators::Pair<'_, Rule>) -> Result<Node> {
     match pair.as_rule() {
         Rule::Statement => {
             let statement = pair.into_inner().next().unwrap();
             match statement.as_rule() {
-                Rule::Loop => Ok(Node::Loop(Loop::parse_from(statement).unwrap())),
-                Rule::Function => Ok(Node::Function(Function::parse_from(statement).unwrap())),
-                Rule::Call => Ok(Node::Call(Call::parse_from(statement).unwrap())),
-                Rule::Break => Ok(Node::Break(Break::parse_from(statement).unwrap())),
-                Rule::Throw => Ok(Node::Throw(Throw::parse_from(statement).unwrap())),
-                Rule::Import => Ok(Node::Import(Import::parse_from(statement).unwrap())),
-                Rule::TryCatch => Ok(Node::TryCatch(TryCatch::parse_from(statement).unwrap())),
-                Rule::Variable => Ok(Node::Variable(Variable::parse_from(statement).unwrap())),
+                Rule::Loop => Ok(Node::Loop(Loop::parse_from(statement)?)),
+                Rule::Function => Ok(Node::Function(Function::parse_from(statement)?)),
+                Rule::Call => Ok(Node::Call(Call::parse_from(statement)?)),
+                Rule::Break => Ok(Node::Break(Break::parse_from(statement)?)),
+                Rule::Throw => Ok(Node::Throw(Throw::parse_from(statement)?)),
+                Rule::Import => Ok(Node::Import(Import::parse_from(statement)?)),
+                Rule::TryCatch => Ok(Node::TryCatch(TryCatch::parse_from(statement)?)),
+                Rule::Variable => Ok(Node::Variable(Variable::parse_from(statement)?)),
                 Rule::AssignmentStatement => {
                     Ok(Node::Assignment(Assignment::parse_from(statement)?))
                 }
                 Rule::IfBlock => Ok(Node::If(IfBlock::parse_from(statement)?)),
                 Rule::Class => Ok(Node::Class(Class::parse_from(statement)?)),
                 Rule::Return => Ok(Node::Return(Return::parse_from(statement)?)),
-                _ => Err("UNEXPECTED_STATEMENT".into()),
+                _ => unreachable!(), // It is impossible for any other rule to be a statement as
+                                     // per the grammer.pest
             }
         }
         Rule::Expr => {
@@ -246,7 +248,6 @@ pub fn parse_one(pair: pest::iterators::Pair<'_, Rule>) -> Result<Node> {
                 _ => Term::parse_from(expression).map(|x| Node::Expr(Expr::Term(x))),
             }
         }
-        Rule::EOI => Ok(Node::EOI),
         _ => Err(format!(
             "Expected either Statement or Expr, but got {:?}",
             pair.as_rule()
@@ -256,13 +257,5 @@ pub fn parse_one(pair: pest::iterators::Pair<'_, Rule>) -> Result<Node> {
 }
 
 pub fn parse(pairs: pest::iterators::Pairs<'_, Rule>) -> Result<Tree> {
-    let mut tree: Tree = vec![];
-
-    for pair in pairs {
-        let node = parse_one(pair)?;
-        if !matches!(node, Node::EOI) {
-            tree.push(node);
-        }
-    }
-    Ok(tree)
+    pairs.map(|pair| parse_one(pair)).collect::<Result<Tree>>()
 }

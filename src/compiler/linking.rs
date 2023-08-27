@@ -18,10 +18,11 @@ pub fn build_libstd() -> Result<PathBuf, Box<dyn std::error::Error>> {
 
     fs::create_dir_all(&walter_dir)?;
 
-    // Ensure libstd is up to date, should just not do this. ie check for new commits
-    let up_to_date = update(STDLIB_URL, &std_dir, "main").expect("Failed to update libstd repo");
+    let up_to_date =
+        update(STDLIB_URL, &std_dir, "main").map_err(|_| "Failed to update libstd repo")?;
 
     if up_to_date {
+        // skip compiling again
         return Ok(std_dir.join("libstd.a"));
     }
 
@@ -55,7 +56,7 @@ pub fn link(
     std_path: &PathBuf,
     release: bool,
     no_std: bool,
-    strip: bool
+    strip: bool,
 ) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let target_str = target_triple.as_str().to_str().unwrap();
 
@@ -108,8 +109,11 @@ pub fn define_libstd(compiler: &Compiler) {
         .ptr_type(AddressSpace::default())
         .fn_type(&[compiler.context.f64_type().into()], false);
 
-    let exit_type = compiler.context.void_type().fn_type(&[compiler.context.f64_type().into()], false);
-    
+    let exit_type = compiler
+        .context
+        .void_type()
+        .fn_type(&[compiler.context.f64_type().into()], false);
+
     compiler
         .module
         .add_function("coitusinterruptus", println_type, None);

@@ -1,5 +1,5 @@
 // Main rule
-Program = _{ SOI ~ Statements? ~ EOI }
+Program = _{ SOI ~ Statements? }
 
 // Comment and whitespace
 COMMENT    = _{ ("#*" ~ (!"*#" ~ ANY)* ~ "*#") | ("#" ~ (!NEWLINE ~ ANY)*) }
@@ -39,6 +39,7 @@ Return       =  { "spez " ~ Expr }
 
 // Identifiers and Declarations
 Declaration =  { Ident ~ "damn " ~ Type }
+// If I make the * a {0, 15} then antijavaexception would work but no message...
 Ident       = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 
 // If, Else If, Else

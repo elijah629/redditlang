@@ -1,7 +1,9 @@
-use std::{fs, path::Path};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use colored::Colorize;
-use semver::Version;
 use serde::{Deserialize, Serialize};
 
 use crate::utils::Result;
@@ -9,12 +11,12 @@ use crate::utils::Result;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectConfiguration {
     pub name: String,
-    pub version: Version,
+    pub version: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Project {
-    pub path: String,
+    pub path: PathBuf,
     pub config: ProjectConfiguration,
 }
 
@@ -26,7 +28,7 @@ impl Project {
         let config: ProjectConfiguration = serde_yaml::from_str(&config)?;
 
         Ok(Project {
-            path: path.to_str().unwrap().to_string(),
+            path: path.to_path_buf(),
             config,
         })
     }

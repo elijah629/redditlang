@@ -23,9 +23,6 @@ pest = "2.7.2"
 pest_derive = "2.7.2"
 enquote = "1.1.0"
 
-# walter.yml version
-semver = { version = "1.0.18", features = ["serde"] }
-
 # walter.yml serialization
 serde = { version = "1.0.183", features = ["derive"] }
 serde_yaml = "0.9.25"

@@ -23,13 +23,11 @@ pub struct Compiler<'ctx> {
     pub module: Module<'ctx>,
 }
 
-//#[derive(Clone)]
 pub struct ScopeVariable<'a> {
     pub ptr: PointerValue<'a>,
     pub r#type: ValidType,
 }
 
-//#[derive(Clone)]
 pub struct Scope<'a> {
     pub variables: HashMap<String, ScopeVariable<'a>>,
 }
@@ -50,9 +48,9 @@ pub fn compile<'a>(
     tree: &Tree,
     compile_meta: &mut CompileMetadata<'a>,
 ) -> Result<()> {
-    for node in tree {
+    for node in tree.into_iter() {
         // these cannot be compiled
-        if !matches!(node, Node::EOI | Node::Import(..)) {
+        if !matches!(node, Node::Import(..)) {
             compile_one(&compiler, &node, compile_meta)?;
         }
     }
@@ -65,24 +63,28 @@ pub fn compile_one<'a>(
     compile_meta: &mut CompileMetadata<'a>,
 ) -> Result<()> {
     let impl_compile: &dyn Compile<'a> = match node {
-        Node::EOI => unreachable!(), // EOI is skipped above
         Node::Expr(_) => bug!("Expected statement, got an expression, COMPILE_EXPRESSION"),
 
         Node::Import(_) => unreachable!(), // import is a compiler directive
 
+        // use: Expr, Expr: not implemented
         Node::Variable(x) => x,
         Node::Assignment(x) => x,
 
+        // complete
         Node::Loop(x) => x,
         Node::Break(x) => x,
 
+        Node::Return(x) => todo!(),
         Node::Function(_) => todo!(),
         Node::Call(call) => todo!(),
         Node::Throw(_) => todo!(),
         Node::TryCatch(_) => todo!(),
+
+        // use: expr
         Node::If(r#if) => todo!(),
+
         Node::Class(_) => todo!(),
-        Node::Return(_) => todo!(),
     };
 
     impl_compile.compile(compiler, compile_meta)
